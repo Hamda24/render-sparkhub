@@ -98,6 +98,15 @@ new Pool({
   ssl: { rejectUnauthorized: false }
 });
 
+const authRoutes     = require('./routes/authRoutes');
+const userRoutes     = require('./routes/userRoutes');
+const sessionRoutes  = require('./routes/sessionRoutes');
+const settingsRoutes = require('./routes/settingsRoutes');
+const adminRoutes    = require('./routes/adminRoutes');
+const studentRoutes  = require('./routes/studentRoutes');
+const tutorRoutes    = require('./routes/tutor_contentRoutes');
+const overviewRoutes = require('./routes/overviewRoutes');
+
 
 // ──────────────────────────────────────────────────────────────
 // 9) CORS & Body Parsing
@@ -122,14 +131,6 @@ app.use('/assets', express.static(path.join(__dirname, '../assets')));
 // ──────────────────────────────────────────────────────────────
 // 11) Import & Mount Your Other Route Modules
 // ──────────────────────────────────────────────────────────────
-const authRoutes     = require('./routes/authRoutes');
-const userRoutes     = require('./routes/userRoutes');
-const sessionRoutes  = require('./routes/sessionRoutes');
-const settingsRoutes = require('./routes/settingsRoutes');
-const adminRoutes    = require('./routes/adminRoutes');
-const studentRoutes  = require('./routes/studentRoutes');
-const tutorRoutes    = require('./routes/tutor_contentRoutes');
-const overviewRoutes = require('./routes/overviewRoutes');
 
 app.use('/api/auth',     authRoutes);
 app.use('/api/user',     userRoutes);

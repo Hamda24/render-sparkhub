@@ -4,7 +4,7 @@ const User = require('../models/userModel');
 
 exports.register = async (req, res, next) => {
   try {
-    const { name, email, password, role} = req.body;
+    const { name, email, password, role } = req.body;
     if (!name || !email || !password || !role)
       return res.status(400).json({ error: 'Missing fields' });
 
@@ -65,7 +65,11 @@ exports.login = async (req, res, next) => {
       { expiresIn: '8h' }
     );
 
-    res.json({ message: 'Authenticated', token, role: user.role });
+    return res.json({
+      message: 'Authenticated',
+      token,
+      role: user.role
+    });
   } catch (err) {
     next(err);
   }
