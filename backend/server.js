@@ -111,13 +111,7 @@ const app = express();
     });
   });
 
-  // ─── 8) POSTGRES POOL (if you need it elsewhere you can export/import it) ─────────
-  const dbPool = new Pool({
-    connectionString: process.env.DATABASE_URL,
-    ssl: { rejectUnauthorized: false },
-  });
-  // (You can attach dbPool to req if you like, or just import this file’s pool in your route modules.)
-
+  
   // ─── 9) CORS & BODY PARSING ─────────────────────────────────────────────────────
   app.use(
     cors({
