@@ -1,19 +1,21 @@
 require('dotenv').config();
-const mysql  = require('mysql2/promise');
-const bcrypt = require('bcrypt');
+const { Pool } = require('pg');
+const bcrypt = require('bcryptjs');
 
 async function main() {
   // grab email & password from the command line:
-  const [,, email, plainPassword] = process.argv;
+  const [, , email, plainPassword] = process.argv;
   if (!email || !plainPassword) {
     console.error('Usage: node seedAdmin.js <email> <password>');
     process.exit(1);
   }
 
   // 1) connect to your DB
-  const pool = mysql.createPool({
-    host:     process.env.DB_HOST,
-    user:     process.env.DB_USER,
+
+
+  const pool = new Pool({
+    host: process.env.DB_HOST,
+    user: process.env.DB_USER,
     password: process.env.DB_PASS,
     database: process.env.DB_NAME
   });
@@ -26,7 +28,7 @@ async function main() {
     `INSERT INTO users (name, email, password_hash, role)
      VALUES (?,      ?,     ?,             ?)`,
     [
-      'Spark Admin', 
+      'Spark Admin',
       email,
       passwordHash,
       'admin'
