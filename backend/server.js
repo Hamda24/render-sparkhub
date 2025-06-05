@@ -1,50 +1,62 @@
 require("dotenv").config();
 
 // 2) Imports (ALL CommonJS style in one place)
-const express       = require("express");
-const path          = require("path");
-const cors          = require("cors");
-const ffmpeg        = require("fluent-ffmpeg");
-const cookieParser  = require("cookie-parser");
-const session       = require("express-session");
-const RedisStore    = require("connect-redis")(session);
+const express = require("express");
+const path = require("path");
+const cors = require("cors");
+const ffmpeg = require("fluent-ffmpeg");
+const cookieParser = require("cookie-parser");
+const session = require("express-session");
+const connectRedis = require("connect-redis");      // ← import connect-redis as a factory
 const { createClient } = require("redis");
-const { google }    = require("googleapis");
-const { Pool }      = require("pg");
+const { google } = require("googleapis");
+const pool = require("../db");
 
 // 3) Create Express app
 const app = express();
 
-// ─── 4) SET UP REDIS CLIENT + SESSION MIDDLEWARE ───────────────────────────────
+// ─── 4) WRAP REDIS + SESSION SETUP IN AN ASYNC IIFE ────────────────────────────
 (async () => {
-  // Create a Redis client using the URL from your environment
-  const redisClient = createClient({
-    url: process.env.REDIS_URL, // e.g. "redis://:password@hostname:6379"
-  });
+  let sessionStore = null;
 
-  redisClient.on("error", (err) => console.error("Redis Client Error", err));
-  await redisClient.connect();
+  if (process.env.REDIS_URL) {
+    try {
+      // a) Create & connect the Redis client
+      const redisClient = createClient({ url: process.env.REDIS_URL });
+      redisClient.on("error", (err) => console.error("Redis Client Error", err));
+      await redisClient.connect();
 
-  // Hook up the RedisStore–backed session. We only call `app.use(session(...))` ONCE.
-  app.use(
-    session({
-      store: new RedisStore({ client: redisClient }),
-      secret: process.env.SESSION_SECRET || "change-this-to-a-long-random-string",
-      resave: false,
-      saveUninitialized: false,
-      cookie: {
-        secure: true,       // ⬅️ set to true if you’re behind HTTPS (Render gives you HTTPS by default)
-        sameSite: "lax",    // adjust if you need "strict" or "none"
-        maxAge: 1000 * 60 * 60 * 24, // 1 day
-      },
-    })
-  );
+      // b) Create the RedisStore by passing in the `session` object
+      const RedisStore = connectRedis(session);
+      sessionStore = new RedisStore({ client: redisClient });
 
-  // ─── 5) ANY OTHER COOKIE/SESSION MIDDLEWARE (if needed) ─────────────────────────
-  // (You already have cookieParser below—keep it, but remove the second `app.use(session(...))`.)
+      console.log("✨ Connected to Redis at", process.env.REDIS_URL);
+    } catch (err) {
+      console.error("⚠️ Could not connect to Redis:", err);
+      console.error("⚠️ Falling back to in-memory session store (NOT for production).");
+    }
+  } else {
+    console.warn("⚠️ REDIS_URL is not set. Using in-memory session store.");
+  }
+
+  // ─── 5) HOOK UP THE SESSION MIDDLEWARE ──────────────────────────────────────────
+  const sessionOptions = {
+    secret: process.env.SESSION_SECRET || "change-this-to-a-secret",
+    resave: false,
+    saveUninitialized: false,
+    cookie: {
+      secure: true,     // Render is HTTPS by default
+      sameSite: "lax",  // adjust if you need "strict" or "none"
+      maxAge: 1000 * 60 * 60 * 24, // 1 day
+    },
+  };
+  if (sessionStore) {
+    sessionOptions.store = sessionStore;
+  }
+  app.use(session(sessionOptions));
+
+  // ─── 6) ANY OTHER COOKIE/SESSION MIDDLEWARE (if needed) ───────────────────────
   app.use(cookieParser());
-  // ────────────────────────────────────────────────────────────────────────────────
-
   // ─── 6) OPTIONAL: FFmpeg setup (only if you use ffmpeg)
   ffmpeg.setFfmpegPath("C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffmpeg.exe");
   ffmpeg.setFfprobePath("C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffprobe.exe");
@@ -122,23 +134,23 @@ const app = express();
 
   // ─── 11) IMPORT AND MOUNT YOUR ROUTE MODULES ───────────────────────────────────
   // (Assuming you have these route files in a ./routes/ folder)
-  const authRoutes     = require("./routes/authRoutes");
-  const userRoutes     = require("./routes/userRoutes");
-  const sessionRoutes  = require("./routes/sessionRoutes");
+  const authRoutes = require("./routes/authRoutes");
+  const userRoutes = require("./routes/userRoutes");
+  const sessionRoutes = require("./routes/sessionRoutes");
   const settingsRoutes = require("./routes/settingsRoutes");
-  const adminRoutes    = require("./routes/adminRoutes");
-  const studentRoutes  = require("./routes/studentRoutes");
-  const tutorRoutes    = require("./routes/tutor_contentRoutes");
+  const adminRoutes = require("./routes/adminRoutes");
+  const studentRoutes = require("./routes/studentRoutes");
+  const tutorRoutes = require("./routes/tutor_contentRoutes");
   const overviewRoutes = require("./routes/overviewRoutes");
 
-  app.use("/api/auth",     authRoutes);
-  app.use("/api/user",     userRoutes);
+  app.use("/api/auth", authRoutes);
+  app.use("/api/user", userRoutes);
   app.use("/api/sessions", sessionRoutes);
   app.use("/api/settings", settingsRoutes);
   app.use("/api/students", studentRoutes);
-  app.use("/api/tutor",    tutorRoutes);
-  app.use("/api/admin",    adminRoutes);
-  app.use("/api",          overviewRoutes);
+  app.use("/api/tutor", tutorRoutes);
+  app.use("/api/admin", adminRoutes);
+  app.use("/api", overviewRoutes);
 
   // ─── 12) START THE SERVER ───────────────────────────────────────────────────────
   const PORT = process.env.PORT || 3000;
