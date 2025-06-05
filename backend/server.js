@@ -92,24 +92,10 @@ app.get('/auth/logout', (req, res) => {
   res.redirect('/');
 });
 
-// ──────────────────────────────────────────────────────────────
-// 8) MySQL Connection (read from ENV)
-// ──────────────────────────────────────────────────────────────
 
-const pool = new Pool({
-  host:     process.env.DB_HOST,
-  user:     process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port:     process.env.DB_PORT || 3306,
-});
-
-pool.connect((err) => {
-  if (err) {
-    console.error('Postgre connection error:', err);
-  } else {
-    console.log('Postgre connected');
-  }
+new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl: { rejectUnauthorized: false }
 });
 
 
