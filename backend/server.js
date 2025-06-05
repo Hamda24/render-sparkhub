@@ -10,7 +10,7 @@ const session = require("express-session");
 const connectRedis = require("connect-redis");      // ← import connect-redis as a factory
 const { createClient } = require("redis");
 const { google } = require("googleapis");
-const pool = require("../db");
+const { Pool } = require("pg");
 
 // 3) Create Express app
 const app = express();
