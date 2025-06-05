@@ -6,7 +6,7 @@ document.addEventListener('DOMContentLoaded', () => {
   if (loginForm) {
     loginForm.addEventListener('submit', async e => {
       e.preventDefault();
-      const email = loginForm.email.value;
+      const email    = loginForm.email.value;
       const password = loginForm.password.value;
       try {
         const res = await fetch('/api/auth/login', {
@@ -26,13 +26,13 @@ document.addEventListener('DOMContentLoaded', () => {
             window.location.href = 'student.html';
         }
       } catch (err) {
-        showToast(err.message);
+       showToast(err.message);
       }
     });
   }
 
   // ———— TUTOR-FIELDS TOGGLE ————
-  const roleSelect = document.getElementById('role');
+  const roleSelect  = document.getElementById('role');
   const tutorFields = document.getElementById('tutorFields');
   if (roleSelect && tutorFields) {
     const update = () => {
@@ -48,18 +48,19 @@ document.addEventListener('DOMContentLoaded', () => {
     registerForm.addEventListener('submit', async e => {
       e.preventDefault();
       // basic password-match check
-      const email = registerForm.email.value;
-      const pwd = registerForm.password.value;
+      const pwd     = registerForm.password.value;
       const confirm = registerForm.confirm.value;
       if (pwd !== confirm) {
         return showToast('Passwords do not match');
       }
 
+      // build FormData (this picks up files + fields)
+      const formData = new FormData(registerForm);
 
       try {
         const res = await fetch('/api/auth/register', {
           method: 'POST',
-          body: JSON.stringify({ email, pwd }),
+          body: formData
         });
         const json = await res.json();
         if (!res.ok) throw new Error(json.error || json.message || 'Registration failed');
