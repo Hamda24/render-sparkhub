@@ -1,0 +1,139 @@
+.table-container {
+  background:      var(--card-light);
+  border-radius:   0.5rem;
+  box-shadow:      0 4px 12px rgba(0,0,0,0.05);
+  overflow-x:      auto;
+  margin-bottom:   2rem;
+  transition:      background 0.3s, border-color 0.3s;
+}
+html.dark-theme .table-container {
+  background:    var(--card-dark);
+}
+
+/* 2) Table baseline */
+.table {
+  width:           100%;
+  border-collapse: collapse;
+  min-width:       600px;
+}
+
+/* 3) Header styling */
+.table thead th {
+  position:        sticky;
+  top:             0;
+  background:      var(--table-hdr-bg);
+  color:           var(--table-hdr-text);
+  font-weight:     600;
+  text-transform:  uppercase;
+  letter-spacing:  0.03em;
+  padding:         0.75rem 1rem;
+  border-bottom:   none;
+}
+
+/* 4) Zebra stripes & hover */
+.table tbody tr:nth-child(even) {
+  background: var(--table-row-even);
+}
+.table tbody tr:nth-child(odd) {
+  background: var(--table-row-odd);
+}
+.table tbody tr:hover {
+  /* you can tune this, here’s a softened hover */
+  background: rgba(59,130,246,0.1);
+}
+
+/* 5) Cells */
+.table th,
+.table td {
+  padding:       0.75rem 1rem;
+  text-align:    left;
+  border-bottom: 1px solid var(--border);
+  color:         var(--text-light);
+  transition:    background 0.3s, color 0.3s;
+}
+html.dark-theme .table th,
+html.dark-theme .table td {
+  color: var(--text-dark);
+}
+
+/* 6) Error row */
+.table .error {
+  text-align: center;
+  color:      #c00;
+  padding:    1rem;
+  background: rgba(255, 0, 0, 0.1);
+}
+
+/* 7) Filters bar */
+.filters {
+  display:        inline-flex;
+  align-items:    center;
+  background:     var(--card-light);
+  padding:        0.5rem 1rem;
+  border-radius:  2rem;
+  box-shadow:     0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom:  1.5rem;
+  transition:     background 0.3s;
+}
+html.dark-theme .filters {
+  background: var(--card-dark);
+}
+
+/* Filter label */
+.filters label {
+  margin-right:  0.75rem;
+  font-weight:   500;
+  color:         var(--text-light);
+}
+html.dark-theme .filters label {
+  color: var(--text-dark);
+}
+
+/* Custom select */
+.filters select {
+  position:      relative;
+  padding:       0.45rem 2.5rem 0.45rem 0.75rem;
+  border:        1px solid var(--border);
+  border-radius: 1rem;
+  background:    var(--card-light);
+  font-size:     0.95rem;
+  color:         var(--text-light);
+  appearance:    none;
+  cursor:        pointer;
+  transition:    border-color 0.2s, background 0.3s, color 0.3s;
+}
+.filters select:focus {
+  border-color: var(--primary);
+  outline:      none;
+}
+html.dark-theme .filters select {
+  background: var(--card-dark);
+  color:      var(--text-dark);
+}
+
+/* Dropdown arrow (FontAwesome) */
+.filters select::-ms-expand { display: none; }
+.filters select::after {
+  content:       '\f0d7';
+  font-family:   'Font Awesome 6 Free';
+  font-weight:   900;
+  position:      absolute;
+  right:         1rem;
+  pointer-events:none;
+  color:         var(--text-light);
+}
+html.dark-theme .filters select::after {
+  color: var(--text-dark);
+}
+
+/* 8) Responsive tweaks */
+@media (max-width: 768px) {
+  .table-container {
+    margin:        0 -1rem 2rem;
+    border-radius: 0;
+  }
+  .filters {
+    flex-direction: column;
+    align-items:    stretch;
+  }
+}

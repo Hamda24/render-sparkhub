@@ -1,0 +1,419 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap');
+
+:root {
+    --primary: #667eea;
+    --light-bg: #f7f8fc;
+    --dark-text: #333;
+    --muted: #555;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    font-family: 'Poppins', sans-serif;
+    background: var(--light-bg);
+    color: var(--dark-text);
+}
+
+/* Header */
+.site-header {
+    position: sticky;
+    top: 0;
+    left: 0;
+    width: 100%;
+    /* ensure full width for sticky */
+    z-index: 1000;
+    background: #667eea;
+    padding: 0.75rem 0;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.site-header .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 1rem;
+    /* add horizontal padding */
+}
+
+.logo {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    text-decoration: none;
+}
+
+.logo-icon {
+    width: 40px;
+    height: 40px;
+    object-fit: contain;
+}
+
+.logo span {
+    font-size: 1.5rem;
+    color: #fff;
+    font-weight: 600;
+}
+
+.site-nav {
+    display: flex;
+    gap: 1rem;
+}
+
+.nav-link {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    color: #fff;
+    text-decoration: none;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.25rem;
+    transition: background 0.2s;
+}
+
+.nav-link:hover,
+.nav-link.active {
+    background: rgba(255, 255, 255, 0.2);
+}
+
+.nav-icon {
+    width: 20px;
+    height: 20px;
+    object-fit: contain;
+}
+
+/* Hero spacing adjustment */
+.hero {
+    padding-top: 2rem;
+}
+
+/* Hero */
+.hero {
+    background: #fff;
+    padding: 4rem 0;
+}
+
+.hero .container {
+    max-width: 1100px;
+    margin: auto;
+    display: flex;
+    align-items: center;
+    gap: 2rem;
+}
+
+.hero-content {
+    flex: 1;
+}
+
+.hero-content h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+}
+
+.hero-content p {
+    font-size: 1.1rem;
+    margin-bottom: 2rem;
+    color: var(--muted);
+}
+
+.hero-buttons .btn {
+    margin-right: 1rem;
+}
+
+.hero-image img {
+  max-width: 600px;   
+  width: 100%;        
+  height: auto;      
+}
+
+/* Buttons */
+.btn {
+    display: inline-block;
+    text-decoration: none;
+    text-align: center;
+    padding: 0.75rem 1.5rem;
+    border-radius: 0.5rem;
+    font-weight: 500;
+    transition: background 0.2s, transform 0.1s;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: #fff;
+    border: none;
+}
+
+.btn-primary:hover {
+    background: #5a67d8;
+    transform: translateY(-2px);
+}
+
+.btn-outline {
+    background: transparent;
+    color: var(--primary);
+    border: 2px solid var(--primary);
+}
+
+.btn-outline:hover {
+    background: var(--primary);
+    color: #fff;
+}
+
+/* Features */
+.features {
+    padding: 4rem 0;
+}
+
+.features .container {
+    max-width: 1100px;
+    margin: auto;
+    display: flex;
+    gap: 2rem;
+    justify-content: space-between;
+}
+
+.feature-card {
+    background: #fff;
+    padding: 2rem;
+    border-radius: 1rem;
+    text-align: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+    flex: 1;
+}
+
+.feature-card .icon {
+    font-size: 2rem;
+    margin-bottom: 1rem;
+    color: var(--primary);
+}
+
+.feature-card h3 {
+    margin-bottom: 0.5rem;
+}
+
+.feature-card p {
+    color: var(--muted);
+    font-size: 0.95rem;
+}
+
+/* Latest Courses */
+.latest-courses {
+    padding: 4rem 0;
+    background: var(--light-bg);
+}
+
+.latest-courses .container {
+    max-width: 1100px;
+    margin: auto;
+}
+
+.latest-courses h2 {
+    text-align: center;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+}
+
+.course-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+    gap: 1.5rem;
+}
+
+.course-card {
+    background: #fff;
+    border-radius: 1rem;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+.course-card img {
+    width: 100%;
+}
+
+.course-card h4 {
+    font-size: 1.1rem;
+    margin: 1rem;
+    color: var(--dark-text);
+}
+
+.course-card .price {
+    display: block;
+    font-weight: 600;
+    color: var(--primary);
+    margin: 0 1rem 1rem;
+}
+
+/* Stats */
+.stats {
+    padding: 4rem 0;
+}
+
+.stats-grid {
+    max-width: 1100px;
+    margin: auto;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 2rem;
+}
+
+.stat-item {
+    background: var(--primary);
+    color: #fff;
+    padding: 2rem;
+    border-radius: 1rem;
+    text-align: center;
+}
+
+.stat-item h3 {
+    font-size: 1.75rem;
+    margin-bottom: 0.5rem;
+}
+
+.stat-item p {
+    font-size: 0.95rem;
+}
+
+/* 1) Overall footer background, padding, and text color */
+.site-footer {
+  background-color: #f7f8fc;
+  /* same light gray as page */
+  color: #333;
+  padding-top: 2rem;
+  border-top: 1px solid #e0e4ef;
+}
+
+/* 2) Footer main row: flex container */
+.footer-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  gap: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0 1rem;
+}
+
+/* 3) About + Contact columns */
+.footer-about,
+.footer-contact {
+  flex: 1 1 300px;
+  min-width: 250px;
+}
+
+/* 4) CTA column (no white “card” around it) */
+.contact-cta-wrapper {
+  flex: 1 1 350px;
+  min-width: 300px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  /* align text and button to left by default */
+  justify-content: center;
+  /* vertically center within footer row */
+  padding: 0;
+  /* no extra padding, let it match other columns */
+}
+
+/* 4a) CTA heading style */
+.contact-cta-wrapper h2 {
+  font-size: 1.5rem;
+  line-height: 1.3;
+  margin: 0 0 1rem;
+  /* a bit of spacing below heading */
+  color: #222;
+}
+
+/* 5) Style “Get Started Today” button in CTA */
+.contact-cta-wrapper .btn-primary {
+  margin: 0;
+  /* no extra margin—align with heading */
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  border-radius: 0.5rem;
+  background-color: #667eea;
+  /* same blue as navbar */
+  color: #fff;
+  text-decoration: none;
+  transition: background-color 0.2s;
+}
+
+.contact-cta-wrapper .btn-primary:hover,
+.contact-cta-wrapper .btn-primary:focus {
+  background-color: #485fc7;
+  /* slightly darker on hover/focus */
+}
+
+/* 6) About + Contact text styling */
+.footer-about h4,
+.footer-contact h4 {
+  margin: 0 0 1rem;
+  color: #222;
+  font-weight: 600;
+}
+
+.footer-about p,
+.footer-contact p {
+  margin: 0 0 0.75rem;
+  color: #555;
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+/* 7) Footer bottom bar: same blue as navbar */
+.footer-bottom {
+  background-color: #667eea;
+  text-align: center;
+  padding: 1rem 0;
+  margin-top: 2rem;
+}
+
+.footer-bottom p {
+  font-size: 0.85rem;
+  color: #fff;
+  margin: 0;
+}
+
+/* 8) Responsive: stack all columns under 768px */
+@media (max-width: 768px) {
+  .footer-container {
+    flex-direction: column;
+    gap: 1.5rem;
+    padding-top: 1.5rem;
+  }
+
+  .footer-about,
+  .footer-contact,
+  .contact-cta-wrapper {
+    min-width: 100%;
+  }
+
+  .contact-cta-wrapper h2 {
+    font-size: 1.25rem;
+  }
+
+  .footer-about p,
+  .footer-contact p {
+    font-size: 0.9rem;
+  }
+}
+
+/* Responsive */
+@media (max-width:768px) {
+    .site-nav {
+        display: none;
+    }
+
+    .hero .container {
+        flex-direction: column;
+    }
+
+    .features .container {
+        flex-direction: column;
+    }
+}

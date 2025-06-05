@@ -1,0 +1,194 @@
+.tutor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px,1fr));
+  gap: 1.5rem;
+  margin-top: 1rem;
+}
+.tutor-card {
+  background: #fff;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  padding: 1rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.tutor-card h3 {
+  margin: 0.5rem 0 0.25rem;
+  font-size: 1.1rem;
+  color: #333;
+}
+.tutor-card img {
+  width: 100px;
+  height: 100px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.75rem;
+}
+.tutor-card p {
+  margin-bottom: 1rem;
+  color: #555;
+}
+.tutor-card button {
+  padding: 0.5rem 1rem;
+  border: none;
+  background: #667eea;
+  color: #fff;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.tutor-card button:hover {
+  background: #5563c1;
+}
+
+/* Dark-mode overrides for tutor cards */
+html.dark-theme .tutor-card {
+  background:   var(--card-dark);
+  border-color: var(--border);
+}
+html.dark-theme .tutor-card h3,
+html.dark-theme .tutor-card p {
+  color: var(--text-dark);
+}
+
+.request-card {
+  max-width: 480px;
+  margin: 2rem auto;
+  background: #fff;
+  padding: 2rem;
+  border-radius: 1rem;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+  text-align: center;
+}
+.request-card img {
+  width: 80px;
+  height: 80px;
+  border-radius: 50%;
+  object-fit: cover;
+  margin-bottom: 0.5rem;
+}
+.request-card h2 {
+  margin-bottom: 0.25rem;
+}
+.request-card p {
+  color: #666;
+  margin-bottom: 1rem;
+}
+.request-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.request-card input,
+.request-card textarea {
+  padding: 0.5rem;
+  border: 1px solid #ccc;
+  border-radius: 0.5rem;
+}
+.request-card button {
+  padding: 0.75rem;
+  background: #667eea;
+  color: #fff;
+  border: none;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.request-card button:hover {
+  background: #5563c1;
+}
+
+/* Dark-mode overrides for request card */
+html.dark-theme .request-card {
+  background:   var(--card-dark);
+  border-color: var(--border);
+}
+html.dark-theme .request-card h2,
+html.dark-theme .request-card p,
+html.dark-theme .request-card input,
+html.dark-theme .request-card textarea {
+  color:      var(--text-dark);
+  background: var(--card-dark);
+}
+
+#sessionsTable {
+  width:           100%;
+  border-collapse: collapse;
+  margin-top:      1rem;
+  background:      var(--card-light);
+  border:          1px solid var(--border);
+  border-radius:   0.5rem;
+  overflow:        hidden;
+}
+
+#sessionsTable thead {
+  background: #667eea;
+}
+
+#sessionsTable thead th {
+  background:      var(--table-hdr-bg);
+  color:           var(--table-hdr-text);
+  padding:         0.75rem 1rem;
+  text-align:      left;
+  font-size:       0.9rem;
+}
+
+#sessionsTable tbody tr:nth-child(odd) {
+  background: var(--table-row-odd);
+}
+
+#sessionsTable tbody tr:nth-child(even) {
+  background: var(--table-row-even);
+}
+
+#sessionsTable tbody td {
+  padding:       0.75rem 1rem;
+  border-bottom: 1px solid var(--border);
+  color:         var(--text-light);
+  font-size:     0.9rem;
+}
+
+/* Meeting link styling */
+#sessionsTable tbody td a {
+  color:           var(--primary);
+  text-decoration: none;
+}
+
+/* Dark-mode overrides for table */
+html.dark-theme #sessionsTable {
+  background:   var(--card-dark);
+  border-color: var(--border);
+}
+html.dark-theme #sessionsTable thead th {
+  background: var(--table-hdr-bg);
+  color:      var(--table-hdr-text);
+}
+html.dark-theme #sessionsTable tbody td {
+  color: var(--text-dark);
+}
+
+#sessionsTable tbody td button {
+  padding:             0.4rem 0.75rem;
+  border:              none;
+  border-radius:       0.3rem;
+  background:          var(--primary);
+  color:               #fff;
+  font-size:           0.85rem;
+  cursor:              pointer;
+  transition:          background 0.2s, transform 0.1s;
+}
+
+#sessionsTable tbody td button:hover {
+  background:          #5563c1; /* a darker shade of your primary */
+  transform:           translateY(-1px);
+}
+
+/* Optional: Disabled state if you ever disable the button */
+#sessionsTable tbody td button:disabled {
+  background:          var(--border);
+  color:               var(--text-light);
+  cursor:              not-allowed;
+  transform:           none;
+}

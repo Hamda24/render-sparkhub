@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>Find a Tutor</title>
+
+    <script>
+        // Prevent white-flash by setting theme class before CSS loads.
+        (function () {
+            if (localStorage.getItem('theme') === 'dark') {
+                document.documentElement.classList.add('dark-theme');
+            }
+        })();
+    </script>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link rel="stylesheet" href="/assets/css/dashboard.css" />
+    <link rel="stylesheet" href="/assets/css/sidebar.css" />
+    <link rel="stylesheet" href="/assets/css/sessions.css" />
+    <link rel="stylesheet" href="/assets/css/theme.css" />
+    <link rel="stylesheet" href="/assets/css/responsive.css" />
+</head>
+
+<body>
+    <div class="dashboard">
+        <aside id="sidebar" class="sidebar">
+            <i id="close-icon" class="fas fa-times"></i>
+
+            <div class="profile">
+                <h3 id="sidebarName">Loading...</h3>
+                <p id="sidebarRole">Student</p>
+            </div>
+            <ul id="sidebarNav" class="nav"></ul>
+
+            <button id="logoutBtn" class="logout">Logout</button>
+        </aside>
+        <div class="toggles">
+            <i id="menu-bars" class="fas fa-bars"></i>
+        </div>
+
+        <div class="content">
+            <main class="main">
+                <h1>Find a Tutor</h1>
+                <div class="tutor-grid" id="tutorGrid">
+                    <!-- JS will inject .tutor-card elements here -->
+                </div>
+            </main>
+        </div>
+    </div>
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <script src="/assets/js/theme.js"></script>
+    <script type="module" src="/assets/js/dashboard.js"></script>
+    <script type="module" src="/assets/js/sidebar.js"></script>
+    <script type="module" src="/assets/js/toast.js"></script>
+    <script type="module" src="/assets/js/student_tutors.js"></script>
+
+</body>
+
+</html>

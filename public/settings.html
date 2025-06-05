@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Settings | SparkHub</title>
+
+  <!-- Prevent white-flash on theme switch -->
+  <script>
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    }
+  </script>
+
+  <!-- Core & theme styles -->
+  <link rel="stylesheet" href="/assets/css/dashboard.css" />
+  <link rel="stylesheet" href="/assets/css/sidebar.css" />
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+
+  <!-- Settings styles -->
+  <link rel="stylesheet" href="/assets/css/settings.css" />
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+
+  <!-- FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+</head>
+
+<body>
+  <div class="dashboard">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="sidebar">
+      <i id="close-icon" class="fas fa-times"></i>
+      <div class="profile">
+        <h3 id="sidebarName">Loading…</h3>
+        <p id="sidebarRole">Loading…</p>
+      </div>
+      <ul id="sidebarNav" class="nav"></ul>
+      <button id="logoutBtn" class="logout">Logout</button>
+    </aside>
+
+    <!-- Mobile hamburger toggle -->
+    <div class="toggles">
+      <i id="menu-bars" class="fas fa-bars"></i>
+    </div>
+
+    <!-- Settings controls + inline panel -->
+    <div class="settings-wrapper">
+      <div class="settings-options">
+        <button id="modeToggleBtn" class="option-btn" title="Appearance">
+          <i class="fas fa-adjust"></i>
+        </button>
+        <button id="emailBtn" class="option-btn" title="Change email">
+          <i class="fas fa-envelope"></i>
+        </button>
+        <button id="passwordBtn" class="option-btn" title="Change password">
+          <i class="fas fa-lock"></i>
+        </button>
+      </div>
+
+
+      <div id="settingsCard" class="settings-content card hidden"> <!-- Email form (hidden) -->
+        <form id="emailForm" class="settings-form hidden">
+          <h2>Change Email</h2>
+          <div class="form-group full">
+            <input type="email" name="oldEmail" placeholder=" " required />
+            <label>Current Email</label>
+          </div>
+          <div class="form-group full">
+            <input type="email" name="newEmail" placeholder=" " required />
+            <label>New Email</label>
+          </div>
+          <button type="submit" class="btn">Update Email</button>
+        </form>
+
+        <!-- Password form (hidden) -->
+        <form id="passwordForm" class="settings-form hidden">
+          <h2>Change Password</h2>
+          <div class="form-group">
+            <input type="password" name="oldPassword" placeholder=" " required />
+            <label>Current Password</label>
+          </div>
+          <div class="form-group">
+            <input type="password" name="newPassword" placeholder=" " required />
+            <label>New Password</label>
+          </div>
+          <div class="form-group">
+            <input type="password" id="confirmPassword" placeholder=" " required />
+            <label>Confirm New Password</label>
+          </div>
+          <button type="submit" class="btn">Update Password</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Core scripts -->
+  <script src="/assets/js/theme.js"></script>
+  <script type="module" src="/assets/js/sidebar.js"></script>
+  <script type="module" src="/assets/js/toast.js"></script>
+  <script type="module" src="/assets/js/settings.js"></script>
+</body>
+
+</html>

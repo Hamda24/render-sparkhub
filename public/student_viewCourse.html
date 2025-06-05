@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>View Course | Student</title>
+
+  <script>
+    if (localStorage.getItem('theme') === 'dark') {
+      document.documentElement.classList.add('dark-theme');
+    }
+  </script>
+
+  <link rel="stylesheet" href="/assets/css/theme.css" />
+  <!-- Font Awesome (for sidebar icons) -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="/assets/css/dashboard.css" />
+  <link rel="stylesheet" href="/assets/css/sidebar.css" />
+  <link rel="stylesheet" href="/assets/css/admin_content.css" />
+
+  <style>
+    body {
+      background: var(--bg-light);
+      color: var(--text-light);
+      font-family: system-ui, sans-serif;
+      margin: 0;
+      padding: 0;
+    }
+
+    .dashboard {
+      display: flex;
+      min-height: 100vh;
+      background: var(--bg-light);
+    }
+
+    /* ─── SIDEBAR ────────────────────────────────────────────────────── */
+    .sidebar {
+      background: var(--card-light);
+      color: var(--text-light);
+    }
+
+    html.dark-theme .sidebar {
+      /* theme.css supplies the dark values for these variables */
+      background: var(--card-light);
+      color: var(--text-light);
+    }
+
+    /* ─── MAIN CONTENT ───────────────────────────────────────────────── */
+    .content {
+      background: var(--bg-light);
+      flex: 1;
+      padding: 1rem;
+    }
+
+    .main {
+      max-width: 1200px;
+      margin: 2rem auto;
+      padding: 0 1rem;
+    }
+
+    /* ─── TITLE & BUTTON ─────────────────────────────────────────────── */
+    .title-progress-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    #courseTitle {
+      font-size: 2rem;
+      margin: 0;
+      color: var(--text-light);
+    }
+
+    #startContainer {
+      margin-left: 1rem;
+    }
+
+    #startCourseBtn {
+      padding: 0.5rem 1rem;
+      font-size: 1rem;
+      background: var(--primary);
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    #startCourseBtn:hover {
+      background: var(--primary-dark);
+    }
+
+    /* ─── FILTER BAR ────────────────────────────────────────────────── */
+    .filter-bar {
+      display: flex;
+      gap: 0.75rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .filter-btn {
+      padding: 0.5rem 1rem;
+      border: 1px solid var(--border-light);
+      border-radius: 9999px;
+      background-color: var(--card-light);
+      color: var(--text-light);
+      font-size: 0.95rem;
+      cursor: pointer;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+
+    .filter-btn.active {
+      background-color: var(--primary);
+      color: #fff;
+      border-color: var(--primary);
+    }
+
+    .filter-btn:hover {
+      background-color: var(--primary);
+      color: #fff;
+    }
+
+    /* ─── CONTENT GRID ──────────────────────────────────────────────── */
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 1rem;
+      margin-top: 1rem;
+    }
+
+    /* ─── CONTENT CARD ──────────────────────────────────────────────── */
+    .content-card {
+      position: relative;
+      background: var(--card-light);
+      border: 1px solid var(--border-light);
+      border-radius: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      transition: transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease,
+        background 0.3s ease;
+      height: 100%;
+    }
+
+    .content-card:hover {
+      transform: translateY(-4px) scale(1.02);
+      box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+      border-color: var(--primary);
+    }
+
+    /* Thin accent bar at top (color varies by type) */
+    .content-card::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: var(--primary);
+    }
+
+    .content-card[data-type="pdf"]::before {
+      background: var(--danger);
+    }
+
+    .content-card[data-type="video"]::before {
+      background: var(--primary);
+    }
+
+    /* CARD BODY: ICON / TITLE / TYPE LABEL */
+    .content-card-body {
+      padding: 0.75rem 1rem;
+      flex-grow: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      text-align: center;
+    }
+
+    .content-card-body .content-icon {
+      font-size: 3rem;
+      color: var(--text-medium);
+      margin-bottom: 0.5rem;
+    }
+
+    .content-card-body h3 {
+      margin: 0.5rem 0 0.25rem 0;
+      font-size: 1.25rem;
+      color: var(--text-light);
+      word-break: break-word;
+    }
+
+    .content-card-body .content-type {
+      margin: 0;
+      font-size: 0.9rem;
+      color: var(--text-light);
+      margin-bottom: 0.75rem;
+    }
+
+    /* CARD ACTIONS: PREVIEW / DOWNLOAD / DONE */
+    .content-card-actions {
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: space-around;
+      padding: 0.75rem 1rem;
+      background: var(--card-light);
+    }
+
+    .content-card-actions button,
+    .content-card-actions a {
+      background: transparent;
+      border: none;
+      color: var(--text-medium);
+      font-size: 1.2rem;
+      cursor: pointer;
+      transition: color 0.15s ease, transform 0.15s ease;
+    }
+
+    .content-card-actions button:hover,
+    .content-card-actions a:hover {
+      color: var(--primary);
+      transform: translateY(-2px);
+    }
+
+    .content-card-actions .btn-preview {
+      color: var(--text-light);
+    }
+
+    .content-card-actions .btn-download {
+      color: var(--success);
+    }
+
+    .content-card-actions .btn-delete {
+      color: var(--danger);
+    }
+
+    #progressGraph {
+      width: 120px;
+      height: 120px;
+      flex-shrink: 0;
+      margin-left: auto;
+    }
+
+    /* ─── Make the text inside the SVG visible in both light & dark modes ────── */
+    #progressGraph svg text {
+      fill: var(--text-light);
+    }
+
+    /* In dark mode, override to pure white so the percentage is always visible */
+    html.dark-theme #progressGraph svg text {
+      fill: #ffffff;
+    }
+
+    /* NO CONTENT PLACEHOLDER */
+    .no-content {
+      text-align: center;
+      color: var(--text-medium);
+      font-size: 1rem;
+      margin: 2rem 0;
+    }
+
+    /* RESPONSIVE TWEAKS */
+    @media (max-width: 480px) {
+      .content-card {
+        max-width: 100%;
+      }
+
+      .content-card-body .content-icon {
+        font-size: 2.5rem;
+      }
+
+      .content-card-body h3 {
+        font-size: 1rem;
+      }
+
+      .content-card-actions button,
+      .content-card-actions a {
+        font-size: 1.1rem;
+      }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="dashboard">
+    <aside id="sidebar" class="sidebar">
+      <i id="close-icon" class="fas fa-times"></i>
+
+      <div class="profile">
+        <h3 id="sidebarName">Loading...</h3>
+        <p id="sidebarRole">Student</p>
+      </div>
+      <ul id="sidebarNav" class="nav"></ul>
+
+      <button id="logoutBtn" class="logout">Logout</button>
+    </aside>
+
+    <div class="toggles">
+      <i id="menu-bars" class="fas fa-bars"></i>
+    </div>
+
+    <div class="content">
+      <main class="main">
+
+
+        <!-- NEW: flex‐wrapper around the progress circle and title -->
+        <!-- After: move the SVG to the right -->
+        <div class="title-progress-container">
+          <h1 id="courseTitle">Loading…</h1>
+
+          <div id="startContainer">
+            <button id="startCourseBtn" class="btn btn-primary">
+              Start Course
+            </button>
+          </div>
+
+          <svg id="progressGraph" width="120" height="120" viewBox="0 0 120 120" xmlns="http://www.w3.org/2000/svg">
+            <!-- Background ring -->
+            <circle class="progress-bg" cx="60" cy="60" r="54" fill="none" stroke="var(--border-light)"
+              stroke-width="12" />
+
+            <!-- Foreground ring (rotated so 0% starts at the top) -->
+            <circle class="progress-circle" cx="60" cy="60" r="54" fill="none" stroke="var(--primary)" stroke-width="12"
+              stroke-linecap="round" stroke-dasharray="339.292" stroke-dashoffset="339.292"
+              transform="rotate(-90 60 60)" />
+
+            <!-- Center percentage text: we set fill="white" explicitly -->
+            <text id="progressText" x="60" y="66" text-anchor="middle" font-size="20"
+              font-family="system-ui, sans-serif" fill="white">
+              0%
+            </text>
+          </svg>
+        </div>
+
+        <!-- Filter pills (All / Videos / PDFs ) -->
+        <div class="filter-bar">
+          <button class="filter-btn active" data-filter="all">All</button>
+          <button class="filter-btn" data-filter="videos">Videos</button>
+          <button class="filter-btn" data-filter="pdfs">PDFs</button>
+        </div>
+
+        <!-- ===== CONTENT GRID (where JS will inject .content-card elements) ===== -->
+        <div id="itemsContainer" class="content-grid"></div>
+      </main>
+    </div>
+  </div>
+
+  <!-- Toast container (for showToast) -->
+  <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+  <!-- Global scripts -->
+  <script src="/assets/js/theme.js"></script>
+  <script type="module" src="/assets/js/dashboard.js"></script>
+  <script type="module" src="/assets/js/sidebar.js"></script>
+  <script type="module" src="/assets/js/toast.js"></script>
+  <link rel="stylesheet" href="/assets/css/responsive.css" />
+
+  <!-- UPDATED student_viewCourse.js (see next section) -->
+  <script type="module" src="/assets/js/student_viewCourse.js"></script>
+</body>
+
+</html>

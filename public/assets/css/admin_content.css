@@ -1,0 +1,237 @@
+:root {
+  --primary:      #86b4ff;
+  --primary-dark: #82a9ff;
+  --success:      #10b981;   /* green for downloads */
+  --danger:       #ef4444;   /* red for PDF accent/delete */
+  --bg:           #f4f6f8;
+  --card-bg:      #ffffff;
+  --border:       #e2e8f0;
+  --text:         #2d3748;
+  --text-dark:    #1a202c;
+  --text-medium:  #4a5568;
+  --text-light:   #0a0b0b;
+}
+
+/* ------------------------------
+   GLOBAL LAYOUT
+------------------------------ */
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: system-ui, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+.main {
+  max-width: 1200px;
+  margin: 2rem auto;
+  padding: 0 1rem;
+}
+
+h1 {
+  font-size: 2rem;
+  margin-bottom: 1.5rem;
+}
+
+/* ------------------------------
+   FULL-WIDTH UPLOAD FORM (TOOLBAR)
+------------------------------ */
+.full-width-form {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  align-items: center;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  padding: 0.75rem 1rem;
+  margin-bottom: 2rem;
+}
+
+.full-width-form input[type="text"],
+.full-width-form select {
+  flex: 1 1 200px;
+  padding: 0.75rem 1rem;
+  border: 1px solid var(--border);
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  color: var(--text-dark);
+}
+
+.full-width-form input[type="file"] {
+  flex: 1 1 200px;
+}
+
+.full-width-form button[type="submit"] {
+  background-color: var(--primary);     /* your blue (≈#5885FF) */
+  color: var(--text);                  /* black (≈#2d3748) */
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background-color 0.2s ease, transform 0.1s ease;
+}
+
+/* On hover, darken the same blue slightly (using your “primary‐dark” variable) */
+.full-width-form button[type="submit"]:hover {
+  background-color: var(--primary-dark);  /* slightly darker blue */
+  transform: translateY(-1px);
+}
+
+/* On active (pressed), use an even darker shade or fallback to a hardcoded darker blue */
+.full-width-form button[type="submit"]:active {
+  background-color: #4F73E1;  /* for example, a darker blue (#4F73E1) */
+  transform: translateY(0);
+}
+
+/* ------------------------------
+   CONTENT GRID LAYOUT
+------------------------------ */
+.content-grid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  justify-content: center;
+}
+
+/* ------------------------------
+   CONTENT CARD (PDF / VIDEO)
+------------------------------ */
+.content-card {
+  position: relative;
+  background: var(--card-bg);
+  border: 1px solid var(--border);
+  border-radius: 0.5rem;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.03);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s;
+  height: 100%;
+}
+
+.content-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  border-color: var(--primary);
+}
+
+/* Thin accent bar at top (color based on type) */
+.content-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 5px;
+  background: var(--primary);
+}
+.content-card[data-type="pdf"]::before {
+  background: var(--danger);
+}
+.content-card[data-type="video"]::before {
+  background: var(--primary);
+}
+
+/* ------------------------------
+   CARD BODY: ICON, TITLE, TYPE LABEL
+------------------------------ */
+.content-card-body {
+  padding: 0.75rem 1rem;
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+}
+
+.content-card-body .content-icon {
+  font-size: 3rem;
+  color: var(--text-medium);
+  margin-bottom: 0.5rem;
+}
+
+.content-card-body h3 {
+  margin: 0.5rem 0 0.25rem 0;
+  font-size: 1.25rem;
+  color: var(--text-dark);
+  word-break: break-word;
+}
+
+.content-card-body .content-type {
+  margin: 0;
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin-bottom: 0.75rem;
+}
+
+/* ------------------------------
+   CARD ACTIONS: PREVIEW / DOWNLOAD / DELETE
+------------------------------ */
+.content-card-actions {
+  border-top: 1px solid var(--border);
+  display: flex;
+  justify-content: space-around;
+  padding: 0.75rem 1rem;
+  background: var(--card-bg);
+}
+
+.content-card-actions button,
+.content-card-actions a {
+  background: transparent;
+  border: none;
+  color: var(--text-medium);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.content-card-actions button:hover,
+.content-card-actions a:hover {
+  color: var(--primary);
+  transform: translateY(-2px);
+}
+
+.content-card-actions .btn-preview {
+  color: var(--text-dark);
+}
+
+.content-card-actions .btn-download {
+  color: var(--success);
+}
+
+.content-card-actions .btn-delete {
+  color: var(--danger);
+}
+
+/* ------------------------------
+   NO CONTENT PLACEHOLDER
+------------------------------ */
+.no-content {
+  text-align: center;
+  color: var(--text-medium);
+  font-size: 1rem;
+  margin: 2rem 0;
+}
+
+/* ------------------------------
+   RESPONSIVE TWEAKS
+------------------------------ */
+@media (max-width: 480px) {
+  .content-card {
+    max-width: 100%;
+  }
+  .content-card-body .content-icon {
+    font-size: 2.5rem;
+  }
+  .content-card-body h3 {
+    font-size: 1rem;
+  }
+  .content-card-actions button,
+  .content-card-actions a {
+    font-size: 1.1rem;
+  }
+}

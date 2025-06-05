@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Spark Hub | Home</title>
+    <link rel="stylesheet" href="/assets/css/index.css">
+    <link rel="stylesheet" href="/assets/css/responsive.css" />
+    <link rel="stylesheet" href="/assets/css/dashboard.css">
+
+</head>
+
+<body>
+    <!-- Header / Navigation -->
+    <header class="site-header">
+        <div class="container">
+            <a href="index.html" class="logo">
+                <img src="assets/images/icon.png" alt="SparkHub logo" class="logo-icon" />
+                <span>Spark Hub</span>
+            </a>
+            <nav class="site-nav">
+                <a href="index.html" class="nav-link active">
+                    <span>Home</span>
+                </a>
+                <a href="register.html" class="nav-link">
+                    <span>Register</span>
+                </a>
+                <a href="login.html" class="nav-link">
+                    <span>Login</span>
+                </a>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Hero Section -->
+    <section class="hero">
+        <div class="container">
+            <div class="hero-content">
+                <h1>Empower Your Learning with Spark Hub</h1>
+                <p>Unlock interactive courses, expert tutors, and a supportive community.</p>
+                <div class="hero-buttons">
+                    <a href="register.html" class="btn btn-outline">
+                        <span>Start Now</span>
+                    </a>
+                </div>
+            </div>
+            <div class="hero-image">
+                <img src="assets/images/image1.png" alt="Learning illustration">
+            </div>
+        </div>
+    </section>
+
+    <!-- Features -->
+    <section class="features">
+        <div class="container">
+            <div class="feature-card">
+                <i class="icon">📚</i>
+                <h3>Wide Course Selection</h3>
+                <p>From web development to data science, find the right path for you.</p>
+            </div>
+            <div class="feature-card">
+                <i class="icon">👩‍🏫</i>
+                <h3>Expert Tutors</h3>
+                <p>Learn from industry professionals who guide you every step of the way.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- ======= Latest Courses (DYNAMIC) ======= -->
+    <section class="latest-courses">
+        <div class="container">
+            <h2 class="section-heading">Latest Courses</h2>
+            <div id="course-grid" class="course-grid">
+                <!-- JavaScript will inject .course-card elements here -->
+            </div>
+        </div>
+    </section>
+
+    <!-- ======= Stats Overview (DYNAMIC) ======= -->
+    <section class="stats">
+        <div class="container stats-grid">
+            <div class="stat-item">
+                <h3 id="stat-courses-available">--</h3>
+                <p>Courses Available</p>
+            </div>
+            <div class="stat-item">
+                <h3 id="stat-students-count">--</h3>
+                <p>Students</p>
+            </div>
+            <div class="stat-item">
+                <h3 id="stat-tutors-count">--</h3>
+                <p>Expert Tutors</p>
+            </div>
+        </div>
+    </section>
+
+
+
+    <!-- ======= Footer ======= -->
+    <footer class="site-footer">
+        <div class="container footer-container">
+            <!-- About Spark Hub Column -->
+            <div class="footer-about">
+                <h4>About Spark Hub</h4>
+                <p>
+                    Spark Hub is dedicated to providing top‐quality, interactive courses and expert guidance
+                    to help you level up your skills. Join our community and take the next step in your
+                    learning journey.
+                </p>
+            </div>
+
+            <!-- Contact Us Column -->
+            <div class="footer-contact">
+                <h4>Contact Us</h4>
+                <p>Email: <a href="mailto:academysparkhub@gmail.com">academysparkhub@gmail.com</a></p>
+                <p>Phone: <a href="tel:+96170673307">+961 70673307</a></p>
+            </div>
+
+            <!-- CTA Column ("Ready to Spark Your Career?") -->
+            <div class="contact-cta-wrapper">
+                <h2>Ready to Spark Your Career?</h2>
+                <a href="register.html" class="btn btn-primary">Get Started Today</a>
+            </div>
+        </div>
+
+        <!-- Bottom Bar with © text -->
+        <div class="footer-bottom">
+            <p>&copy; 2025 Spark Hub. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <!-- Toast container (if you’re using toast.js) -->
+    <div id="toast-container" aria-live="polite" aria-atomic="true"></div>
+
+    <!-- ======= Client‐Side JS ======= -->
+    <script>
+        // 1) Fetch and render “Latest Courses”
+        async function loadLatestCourses() {
+            try {
+                const response = await fetch('/api/courses/latest');
+                if (!response.ok) throw new Error('Failed to fetch courses');
+                const courses = await response.json();
+
+                const grid = document.getElementById('course-grid');
+                grid.innerHTML = ''; // Clear any placeholder content
+
+                courses.forEach(course => {
+                    // Create one .course-card for each returned course object
+                    const card = document.createElement('div');
+                    card.classList.add('course-card');
+
+                    // Course image (Base64 data URL)
+                    const img = document.createElement('img');
+                    img.src = course.imageUrl;       // e.g. "data:image/png;base64,iVBORw0K..."
+                    img.alt = `Thumbnail for ${course.title}`;
+                    img.classList.add('course-image');
+                    card.appendChild(img);
+
+                    // Course title
+                    const titleEl = document.createElement('h4');
+                    titleEl.classList.add('course-title');
+                    titleEl.innerText = course.title;
+                    card.appendChild(titleEl);
+
+                    // Make the card clickable to go to /courses/:id (adjust as needed)
+                    card.addEventListener('click', () => {
+                        window.location.href = `/courses/${course.id}`;
+                    });
+                    card.style.cursor = 'pointer';
+
+                    grid.appendChild(card);
+                });
+            } catch (err) {
+                console.error(err);
+                // Optionally show a fallback message in the grid
+                // document.getElementById('course-grid').innerText = 'Unable to load courses.';
+            }
+        }
+
+        // 2) Fetch and render “Stats Overview”
+        async function loadStatsOverview() {
+            try {
+                const response = await fetch('/api/stats/overview');
+                if (!response.ok) throw new Error('Failed to fetch stats');
+                const stats = await response.json();
+
+                document.getElementById('stat-courses-available').innerText =
+                    stats.coursesAvailable + '+';
+                document.getElementById('stat-students-count').innerText =
+                    stats.studentsCount + '+';
+                document.getElementById('stat-tutors-count').innerText =
+                    stats.tutorsCount + '+';
+            } catch (err) {
+                console.error(err);
+                // Optionally show fallback placeholders:
+                // document.getElementById('stat-courses-available').innerText = '--';
+            }
+        }
+
+        // Run both fetches once the DOM is loaded
+        document.addEventListener('DOMContentLoaded', () => {
+            loadLatestCourses();
+            loadStatsOverview();
+        });
+    </script>
+</body>
+
+</html>

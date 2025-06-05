@@ -1,0 +1,142 @@
+#coursesGrid {
+  display: grid;
+  gap: 1.5rem;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 450px));
+  justify-content: center;
+  margin-top: 2rem;
+}
+
+/* ------------------------------------------------------------------
+   2) â€œCardâ€ style for each video/pdf/quiz
+   ------------------------------------------------------------------ */
+.card {
+  position: relative;              /* for the colored accent stripe */
+  background: #ffffff;             /* white background */
+  border-radius: 12px;             /* rounded corners */
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08); /* subtle shadow */
+  transition: 
+    transform 0.25s ease-out, 
+    box-shadow 0.25s ease-out,
+    background-color 0.25s ease-out;
+  width: 100%;
+  max-width: 450px;
+}
+
+/* Thin colored stripe at top of card, using your â€œprimaryâ€ CSS variable */
+.card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60px;                      /* width of stripe */
+  height: 6px;                      /* thickness of stripe */
+  background: var(--primary);       /* your brand color */
+  border-bottom-right-radius: 6px;  /* curve only that corner */
+  border-top-left-radius: 12px;     /* match cardâ€™s rounding */
+}
+
+/* ------------------------------------------------------------------
+   3) Hover effect: lift + stronger shadow + slight background tint
+   ------------------------------------------------------------------ */
+.card:hover {
+  transform: translateY(-6px) scale(1.015);
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.12);
+  background-color: #fbfbfc;         /* off-white tint */
+}
+
+
+/* 4) Thumbnail at top */
+.card-thumb {
+  width: 100%;
+  height: 140px;                     /* a bit taller than before */
+  object-fit: cover;
+   padding: 0.5rem;
+  background-color: #f5f5f5;         /* lighter gray fallback */
+}
+
+.card-thumb video,
+.card-thumb embed {
+  display: block;
+  width: 100%;
+  height: auto;
+  margin-bottom: 0.5rem;      /* give space before the â€œDownloadâ€ link */
+}
+.card-thumb a.btn-view {
+  display: inline-block;
+  /* you already have .btn-view styles, so itâ€™ll look like a pillâ€button */
+}
+
+/* 5) Centered â€œcardâ€contentâ€ with some padding tweaks */
+.card-content {
+  padding: 1rem 1.25rem;
+  flex-grow: 1;
+  text-align: center;                /* center the title + tutor text */
+}
+.card-content h2 {
+  margin: 0.75rem 0 0.5rem 0;
+  font-size: 1.3rem;
+  line-height: 1.2;
+  color: var(--text-dark);           /* ensure high contrast */
+}
+.card-content p {
+  margin: 0;
+  font-size: 0.95rem;
+  color: var(--text-medium);         /* slightly lighter than title */
+}
+
+/* 6) â€œView Courseâ€ button with a more â€œghostâ€ look */
+.card-actions {
+  padding: 0.75rem 1.25rem;
+  text-align: center;
+  border-top: 1px solid #e0e0e0;      /* subtle separator */
+}
+.card-actions .btn-view {
+  display: inline-block;
+  background: transparent;
+  color: var(--primary);
+  border: 2px solid var(--primary);
+  padding: 0.5rem 1.25rem;
+  border-radius: 9999px;             /* pill shape */
+  font-size: 0.93rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+.card-actions .btn-view:hover {
+  background-color: var(--primary);
+  color: #fff;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+.card-actions .btn-view:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+}
+.card-actions .btn-view:focus {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(79, 99, 255, 0.3); /* focus ring */
+}
+
+/* 7) (Optional) Responsive tweak: when the grid collapses to 1 column */
+@media (max-width: 480px) {
+  .card-thumb {
+    height: 120px;
+  }
+  .card-content h2 {
+    font-size: 1.1rem;
+  }
+  .card-content p {
+    font-size: 0.85rem;
+  }
+  .card-actions .btn-view {
+    font-size: 0.85rem;
+    padding: 0.45rem 1rem;
+  }
+}   

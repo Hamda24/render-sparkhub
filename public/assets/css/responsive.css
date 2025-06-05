@@ -1,0 +1,203 @@
+@media (max-width: 578px) {
+  /* Content grids (e.g. .course-grid, .tutor-grid, .content-grid) become two columns */
+  .course-grid,
+  .tutor-grid,
+  .content-grid,
+  #coursesContainer,
+  #itemsContainer {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+
+  /* Reduce horizontal padding on main containers */
+  .container,
+  .main,
+  .content,
+  .dashboard .content {
+    padding-left: 0.5rem;
+    padding-right: 0.5rem;
+  }
+
+  /* Shrink hero text and features stacking */
+  .hero .container,
+  .features .container {
+    flex-direction: column;
+    gap: 1.5rem;
+  }
+  .hero-content h1 {
+    font-size: 1.75rem;
+  }
+  .hero-content p {
+    font-size: 1rem;
+  }
+
+  /* Sidebar: hide the text labels, show only icons (if any),
+     or completely collapse off‐canvas. */
+  .sidebar {
+    width: 0;                     /* off‐canvas */
+    overflow: hidden;
+  }
+  .sidebar.active {
+    width: 250px;                 /* re‐expand if toggled */
+  }
+  /* Adjust toggle button position */
+  .toggles {
+    left: 0.5rem;
+  }
+
+  /* Footer columns: stack into two rows */
+  .footer-container {
+    flex-direction: column;
+    gap: 1.25rem;
+  }
+}
+
+/* --------------------------------------------------
+   2) At ≤ 400px: collapse any remaining two‐column grids into single column,
+                increase tap‐targets (buttons), stack headings/content vertically
+   -------------------------------------------------- */
+@media (max-width: 400px) {
+  /* All grid‐based lists become strictly single‐column */
+  .course-grid,
+  .tutor-grid,
+  .content-grid,
+  #coursesContainer,
+  #itemsContainer {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  /* Stat items (three boxes) become full‐width stacked */
+  .stats-grid,
+  .stats {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+
+  .stat-item {
+    padding: 1.5rem;
+  }
+
+  /* Footer: all three columns stack */
+  .footer-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1rem;
+  }
+
+  /* Contact CTA (no white card wrapper) should be full‐width */
+  .contact-cta-wrapper {
+    width: 100%;
+    padding: 0;
+  }
+  .contact-cta-wrapper h2 {
+    font-size: 1.25rem;
+    margin-bottom: 0.75rem;
+  }
+  .contact-cta-wrapper .btn-primary {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+
+  /* Reduce sidebar toggle icon size */
+  .toggles i {
+    font-size: 1.5rem;
+  }
+
+  /* Hero & Features: further reduce text */
+  .hero-content h1 {
+    font-size: 1.5rem;
+  }
+  .hero-content p {
+    font-size: 0.95rem;
+  }
+  .feature-card {
+    padding: 1.5rem;
+  }
+  .feature-card h3 {
+    font-size: 1rem;
+  }
+  .feature-card p {
+    font-size: 0.9rem;
+  }
+
+  /* Latest Courses Section: shrink heading */
+  .latest-courses h2 {
+    font-size: 1.5rem;
+  }
+
+  /* Course/Tutor cards: reduce vertical padding */
+  .course-card,
+  .tutor-card {
+    border-radius: 0.75rem;
+  }
+  .course-card h4,
+  .tutor-card h3 {
+    font-size: 1rem;
+  }
+
+  /* Student view‐course layout: stack title + progress circle vertically */
+  .title-progress-container {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.75rem;
+  }
+  #courseTitle {
+    font-size: 1.5rem;
+  }
+  #progressGraph {
+    width: 100px;
+    height: 100px;
+    margin: 0;
+  }
+  #startCourseBtn {
+    font-size: 0.95rem;
+    padding: 0.5rem 0.75rem;
+  }
+
+  /* Sidebar: full collapse by default */
+  .sidebar {
+    left: -260px;
+  }
+  .sidebar.active {
+    left: 0;
+  }
+  /* Show close‐icon inside the sidebar */
+  #close-icon {
+    display: block;
+    right: 1rem;
+    top: 1rem;
+  }
+
+  /* Buttons: full‐width where appropriate */
+  button[type="submit"],
+  .btn {
+    width: 100%;
+    padding: 0.75rem;
+    font-size: 1rem;
+  }
+}
+
+/* ==========================================================================
+   3) Some fine‐tuning of typography & spacing beneath
+   ========================================================================== */
+
+/* Reduce base font-size for very small screens */
+@media (max-width: 480px) {
+  body {
+    font-size: 14px;
+  }
+}
+
+/* Slightly reduce container horizontal padding at tablet widths */
+@media (max-width: 768px) {
+  .container,
+  .main,
+  .content,
+  .dashboard .content {
+    padding-left: 1rem;
+    padding-right: 1rem;
+  }
+}

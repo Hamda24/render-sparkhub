@@ -1,0 +1,183 @@
+:root {
+  --primary:      #86b4ff;
+  --primary-dark: #82a9ff;
+  --success:      #10b981;
+  --danger:       #ef4444;
+
+  /* These are the “light”‐mode defaults: */
+  --bg-light:     #f4f6f8;
+  --card-light:   #ffffff;
+  --border-light: #e2e8f0;
+  --text-light:   #2d3748;
+  --text-dark:    #1a202c; /* this value changes in dark mode below */
+  --text-medium:  #4a5568;
+  --table-hdr-bg: var(--primary);
+
+}
+
+/* ─── Base ────────────────────────────────────────────────────────────── */
+html {
+  background: var(--bg-light);
+  color:      var(--text-light);
+  transition: background 0.3s, color 0.3s;
+}
+
+/* --------------------------------
+   2) Dark‐mode variables
+-------------------------------- */
+
+
+html.dark-theme {
+  --bg-light:     #121212;   /* dark background for the entire page */
+  --card-light:   #1e1e1e;   /* dark background for cards, forms, etc. */
+  --border-light: #333333;   /* darker border color in dark mode */
+  --text-light:   #ececec;   /* very pale text on dark background */
+  --text-dark:    #ffffff;   /*  white text where you explicitly used “--text-dark” */
+  --text-medium:  #dddddd;   /* a slightly darker gray than pure white */
+}
+
+body {
+  margin:     0;
+  padding:    0;
+  background: transparent;
+  color:      inherit;
+}
+
+/* ─── Dashboard & Sidebar ───────────────────────────────────────────── */
+.dashboard {
+  display:      flex;
+  min-height:   100vh;
+  background:   transparent;
+  transition:   background 0.3s;
+}
+
+.sidebar {
+  background: var(--card-light);
+  color:      var(--text-light);
+  transition: background 0.3s, color 0.3s;
+}
+html.dark-theme .sidebar {
+  background: var(--card-dark);
+  color:      var(--text-dark);
+}
+
+.sidebar .nav a {
+  color: var(--text-light);
+}
+html.dark-theme .sidebar .nav a {
+  color: var(--text-dark);
+}
+
+/* ─── Cards ───────────────────────────────────────────────────────────── */
+.card,
+.tutor-card {
+  background:    var(--card-light);
+  border:        1px solid var(--border);
+  border-radius: 8px;
+  box-shadow:    0 2px 8px rgba(0,0,0,0.05);
+  padding:       1.5rem;
+  transition:    background 0.3s, border-color 0.3s;
+}
+html.dark-theme .card,
+html.dark-theme .tutor-card {
+  background:   var(--card-dark);
+  border-color: var(--border);
+}
+
+/* ─── Buttons ─────────────────────────────────────────────────────────── */
+.btn {
+  background:    var(--primary);
+  color:         #fff;
+  padding:       0.6rem 1.2rem;
+  border:        none;
+  border-radius: 6px;
+  cursor:        pointer;
+  transition:    background 0.2s;
+  font-size:     1rem;
+}
+.btn:hover {
+  background: #3730a3;
+}
+
+/* ─── Global Text Override ───────────────────────────────────────────────
+   Force *everything* (except button text) to the current light/dark text var */
+body,
+body * {
+  color: var(--text-light) !important;
+}
+html.dark-theme body,
+html.dark-theme body * {
+  color: var(--text-dark) !important;
+}
+.btn,
+.btn * {
+  color: #fff !important;
+}
+
+/* ─── Table Striping ─────────────────────────────────────────────────── */
+tbody tr:nth-child(odd) {
+  background: var(--table-row-odd);
+}
+tbody tr:nth-child(even) {
+  background: var(--table-row-even);
+}
+
+/* ─── My Sessions Table Overrides ────────────────────────────────────── */
+/* Light mode */
+#sessionsTable {
+  background: var(--card-light);
+  border:     1px solid var(--border);
+}
+#sessionsTable thead th {
+  background: var(--table-hdr-bg);
+  color:      var(--table-hdr-text);
+}
+#sessionsTable tbody td {
+  color:      var(--text-light);
+}
+
+/* Dark mode */
+html.dark-theme #sessionsTable {
+  background:   var(--card-dark);
+  border-color: var(--border);
+}
+html.dark-theme #sessionsTable thead th {
+  background: var(--table-hdr-bg);
+  color:      var(--table-hdr-text);
+}
+html.dark-theme #sessionsTable tbody td {
+  color: var(--text-dark);
+}
+
+/* Ensure your odd/even stripes still apply: */
+html.dark-theme tbody tr:nth-child(odd) {
+  background: var(--table-row-odd);
+}
+html.dark-theme tbody tr:nth-child(even) {
+  background: var(--table-row-even);
+}
+
+.btn-secondary {
+  /* match the Save button’s height/padding */
+  padding:      0.6rem 1.2rem;
+
+  /* light mode */
+  background:   var(--card-light);
+  color:        var(--text-light) !important;
+  border:       1px solid #ccc;
+}
+
+.btn-secondary:hover {
+  background: #f3f4f6;
+}
+
+/* dark mode override */
+html.dark-theme .btn-secondary {
+  background:   var(--card-dark);
+  color:        var(--text-dark) !important;
+  border:       1px solid #555;
+}
+
+html.dark-theme .btn-secondary:hover {
+  background: #444;  /* or any subtle hover you like */
+}
