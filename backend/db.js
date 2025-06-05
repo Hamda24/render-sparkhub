@@ -1,17 +1,17 @@
-require("dotenv").config();
-const { Pool } = require("pg");
+require('dotenv').config();
 
-// We recommend using a single DATABASE_URL (set via Render) rather than
-// separate DB_HOST/DB_USER/DB_PASS variables. But both approaches can work.
-// Here we’ll show the DATABASE_URL approach.
+const { Pool } = require('pg');
 
+// Use only DATABASE_URL in production—do not fall back to localhost.
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false },   // required for Render’s managed Postgres
+  ssl: {
+    rejectUnauthorized: false
+  }
 });
 
-pool.on("error", (err) => {
-  console.error("Unexpected error on idle Postgres client", err);
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle Postgres client', err);
   process.exit(-1);
 });
 
