@@ -1,74 +1,76 @@
 require('dotenv').config();
-const { Pool } = require('pg');
+const pool = require("../db");
 
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT) || 5432
-});
 
 module.exports = {
   getAll: async () => {
-    const [rows] = await pool.query(
-      `SELECT c.id,
-              c.title,
-              c.description,
-              c.thumbnail,
-              c.thumbnail_format,   /* make sure this is selected! */
-              u.name AS tutorName,
-              c.created_at AS createdAt
-       FROM courses c
-       JOIN users u ON c.tutor_id = u.id
-       ORDER BY c.created_at DESC`
-    );
-    return rows;
+     const sql = `
+      SELECT
+        c.id,
+        c.title,
+        c.description,
+        c.thumbnail,
+        c.thumbnail_format,
+        u.name AS "tutorName",
+        c.created_at AS "createdAt"
+      FROM courses AS c
+      JOIN users AS u ON c.tutor_id = u.id
+      ORDER BY c.created_at DESC
+    `;
+    const result = await pool.query(sql, []);
+    return result.rows;
   },
 
   createCourse: async ({ title, description, thumbnail, thumbnail_format, tutor_id }) => {
-    const [res] = await pool.query(
-      `INSERT INTO courses
-         (title, description, thumbnail, thumbnail_format, tutor_id)
-       VALUES (?,     ?,           ?,         ?,                ?)`,
-      [title, description, thumbnail, thumbnail_format, tutor_id]
-    );
-    return res.insertId;
+    const sql = `
+      INSERT INTO courses
+        (title, description, thumbnail, thumbnail_format, tutor_id)
+      VALUES ($1, $2, $3, $4, $5)
+      RETURNING id
+    `;
+    const params = [title, description, thumbnail, thumbnail_format, tutor_id];
+    const result = await pool.query(sql, params);
+    return result.rows[0].id;
   },
 
   updateCourse: async (id, { title, description, tutor_id, thumbnail, thumbnail_format }) => {
-    if (thumbnail && thumbnail_format) {
-      await pool.query(
-        `UPDATE courses
-           SET title            = ?,
-               description      = ?,
-               tutor_id         = ?,
-               thumbnail        = ?,
-               thumbnail_format = ?,
-               updated_at       = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [title, description, tutor_id, thumbnail, thumbnail_format, id]
-      );
+     if (thumbnail && thumbnail_format) {
+      const sql = `
+        UPDATE courses
+        SET
+          title            = $1,
+          description      = $2,
+          tutor_id         = $3,
+          thumbnail        = $4,
+          thumbnail_format = $5,
+          updated_at       = CURRENT_TIMESTAMP
+        WHERE id = $6
+      `;
+      const params = [title, description, tutor_id, thumbnail, thumbnail_format, id];
+      await pool.query(sql, params);
     } else {
-      // If no new file, leave thumbnail and thumbnail_format unchanged
-      await pool.query(
-        `UPDATE courses
-           SET title       = ?,
-               description = ?,
-               tutor_id    = ?,
-               updated_at  = CURRENT_TIMESTAMP
-         WHERE id = ?`,
-        [title, description, tutor_id, id]
-      );
+      const sql = `
+        UPDATE courses
+        SET
+          title       = $1,
+          description = $2,
+          tutor_id    = $3,
+          updated_at  = CURRENT_TIMESTAMP
+        WHERE id = $4
+      `;
+      const params = [title, description, tutor_id, id];
+      await pool.query(sql, params);
     }
   },
 
   deleteCourse: async (id) => {
-    await pool.query(`DELETE FROM courses WHERE id = ?`, [id]);
+  const sql = `DELETE FROM courses WHERE id = $1`;
+    await pool.query(sql, [id]);
   },
 
   getById: async (id) => {
-    const [rows] = await pool.query(`SELECT * FROM courses WHERE id = ?`, [id]);
-    return rows[0];
+     const sql = `SELECT * FROM courses WHERE id = $1`;
+    const result = await pool.query(sql, [id]);
+    return result.rows[0] || null;
   },
 };

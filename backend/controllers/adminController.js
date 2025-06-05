@@ -2,21 +2,13 @@ const { google } = require('googleapis');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userModel');
 const nodemailer = require('nodemailer');
-const upload     = require('../middleware/upload');
+const upload = require('../middleware/upload');
 const courseModel = require('../models/courseModel');
+const pool = require("../db");
+
 
 
 require('dotenv').config();
-const { Pool } = require('pg');
-
-const pool = new Pool({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
-  port: Number(process.env.DB_PORT) || 5432
-});
-
 // set up your OAuth2 client once
 const oAuth2 = new google.auth.OAuth2(
   process.env.GMAIL_CLIENT_ID,
@@ -178,36 +170,47 @@ exports.rejectTutorRequest = async (req, res, next) => {
 //list all session requests for admin overview
 exports.listAllSessions = async (req, res) => {
   try {
-    const [rows] = await pool.query(
-      `SELECT s.id, s.preferredAt, s.scheduledAt, s.meet_link    AS meetLink, s.status,
-             st.name AS studentName, tt.name AS tutorName
-       FROM sessions s
-       JOIN users st ON s.studentId = st.id
-       JOIN users tt ON s.tutorId   = tt.id
-       ORDER BY s.preferredAt DESC`
-    );
-    res.json({ sessions: rows });
+    const sql = `
+      SELECT 
+        s.id, 
+        s.preferredAt, 
+        s.scheduledAt, 
+        s.meet_link    AS "meetLink", 
+        s.status,
+        st.name       AS "studentName", 
+        tt.name       AS "tutorName"
+      FROM sessions AS s
+      JOIN users AS st ON s."studentId" = st.id
+      JOIN users AS tt ON s."tutorId" = tt.id
+      ORDER BY s."preferredAt" DESC
+    `;
+    const result = await pool.query(sql, []);
+    // result.rows will be an array of objects with keys: id, preferredAt, scheduledAt, meetLink, status, studentName, tutorName
+    return res.json({ sessions: result.rows });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error listing sessions' });
+    console.error('Server error listing sessions:', err);
+    return res.status(500).json({ error: 'Server error listing sessions' });
   }
 };
 
-// NEW: cancel any session (admin action)
+
+// ======================
+// 6) cancelSession
+//    (admin action: cancel one session by setting status = 'cancelled')
+// ======================
 exports.cancelSession = async (req, res) => {
-  const sessionId = req.params.id;
+  const sessionId = Number(req.params.id);
   try {
-    const [result] = await pool.query(
-      'UPDATE sessions SET status = ? WHERE id = ?',
-      ['cancelled', sessionId]
-    );
-    if (result.affectedRows === 0) {
+    const sql = `UPDATE sessions SET status = $1 WHERE id = $2`;
+    const params = ['cancelled', sessionId];
+    const result = await pool.query(sql, params);
+    if (result.rowCount === 0) {
       return res.status(404).json({ error: 'Session not found' });
     }
-    res.json({ message: 'Session cancelled' });
+    return res.json({ message: 'Session cancelled' });
   } catch (err) {
-    console.error(err);
-    res.status(500).json({ error: 'Server error cancelling session' });
+    console.error('Server error cancelling session:', err);
+    return res.status(500).json({ error: 'Server error cancelling session' });
   }
 };
 
@@ -216,7 +219,7 @@ exports.listUsers = async (req, res, next) => {
     // optional ?role=student or ?role=tutor
     const role = req.query.role;
     const users = await User.findByRoles(['student', 'tutor'], role);
-    res.json({ users });      
+    res.json({ users });
   } catch (err) {
     next(err);
   }
@@ -231,9 +234,9 @@ exports.createCourse = async (req, res, next) => {
     let thumbnailBuffer = null;
     let thumbnailFormat = null;
     if (req.file && req.file.buffer) {
-      thumbnailBuffer  = req.file.buffer;
+      thumbnailBuffer = req.file.buffer;
       // Split off the subtype: e.g. "jpeg" from "image/jpeg"
-      thumbnailFormat  = req.file.mimetype.split('/')[1];
+      thumbnailFormat = req.file.mimetype.split('/')[1];
     }
 
     // Pass BOTH the BLOB and its format string to the model

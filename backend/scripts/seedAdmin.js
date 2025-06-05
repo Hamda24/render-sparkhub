@@ -1,5 +1,5 @@
 require('dotenv').config();
-const { Pool } = require('pg');
+const pool = require("../db");
 const bcrypt = require('bcryptjs');
 
 async function main() {
@@ -10,30 +10,21 @@ async function main() {
     process.exit(1);
   }
 
-  // 1) connect to your DB
-
-
-  const pool = new Pool({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASS,
-    database: process.env.DB_NAME
-  });
-
   // 2) hash the plain-text password
   const passwordHash = await bcrypt.hash(plainPassword, 10);
 
   // 3) insert the new admin user
-  await pool.query(
-    `INSERT INTO users (name, email, password_hash, role)
-     VALUES (?,      ?,     ?,             ?)`,
-    [
-      'Spark Admin',
-      email,
-      passwordHash,
-      'admin'
-    ]
-  );
+  const sql = `
+    INSERT INTO users (name, email, password_hash, role)
+    VALUES ($1, $2, $3, $4)
+  `;
+  const params = [
+    'Spark Admin',
+    email,
+    passwordHash,
+    'admin'
+  ];
+  await pool.query(sql, params);
 
   console.log(`✅ Admin user (${email}) created.`);
   process.exit(0);
