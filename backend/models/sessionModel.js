@@ -31,9 +31,18 @@ module.exports = {
   // 3. Create a new session request
   async createRequest(studentId, tutorId, preferredAt, note) {
     const sql = `
-      INSERT INTO sessions ("studentId","tutorId","preferredAt", note)
+      INSERT INTO sessions (studentid, tutorid, preferredat, note)
       VALUES ($1, $2, $3, $4)
-      RETURNING id
+      RETURNING 
+        id,
+        studentid   AS "studentId",
+        tutorid     AS "tutorId",
+        preferredat AS "preferredAt",
+        scheduledat AS "scheduledAt",
+        meet_link   AS "meetLink",
+        status,
+        note,
+        reply
     `;
     const params = [studentId, tutorId, preferredAt, note];
     const result = await pool.query(sql, params);
@@ -45,16 +54,16 @@ module.exports = {
     const sql = `
       SELECT 
         s.id,
-        s."preferredAt",
-        s."scheduledAt",
+        s.preferredat AS "preferredAt",
+        s.scheduledat AS "scheduledAt",
         s.meet_link   AS "meetLink",
         s.status,
         s.reply,
         u.name        AS "tutorName"
       FROM sessions AS s
-      JOIN users    AS u ON s."tutorId" = u.id
-      WHERE s."studentId" = $1
-      ORDER BY s."preferredAt" DESC
+      JOIN users    AS u ON s.tutorid = u.id
+      WHERE s.studentid = $1
+      ORDER BY s.preferredat DESC
     `;
     const result = await pool.query(sql, [studentId]);
     return result.rows;
@@ -65,36 +74,35 @@ module.exports = {
     const sql = `
       SELECT 
         s.id,
-        s."preferredAt",
-        s."scheduledAt",
-        s.meet_link     AS "meetLink",
+        s.preferredat AS "preferredAt",
+        s.scheduledat AS "scheduledAt",
+        s.meet_link   AS "meetLink",
         s.status,
         s.note,
-        u.name          AS "studentName"
+        u.name        AS "studentName"
       FROM sessions AS s
-      JOIN users    AS u ON s."studentId" = u.id
-      WHERE s."tutorId" = $1
-      ORDER BY s."preferredAt" DESC
+      JOIN users    AS u ON s.studentid = u.id
+      WHERE s.tutorid = $1
+      ORDER BY s.preferredat DESC
     `;
     const result = await pool.query(sql, [tutorId]);
     return result.rows;
   },
 
 
-  async saveMeetLink(id, tutorId, scheduledAt, meetLink) {
+async saveMeetLink(id, tutorId, scheduledAt, meetLink) {
     const sql = `
       UPDATE sessions
       SET 
         status      = 'scheduled',
-        "scheduledAt" = $1,
+        scheduledat = $1,
         meet_link   = $2
-      WHERE id = $3 AND "tutorId" = $4
+      WHERE id = $3 AND tutorid = $4
     `;
     const params = [scheduledAt, meetLink, id, tutorId];
     const result = await pool.query(sql, params);
-    return result.rowCount; // number of rows updated
+    return result.rowCount; // how many rows got updated
   },
-
 
   async getOne(id) {
     const sql = `SELECT * FROM sessions WHERE id = $1`;
@@ -102,14 +110,13 @@ module.exports = {
     return result.rows[0] || null;
   },
 
-
   // 7. Decline (delete) a pending session request
- async deleteRequest(id, tutorId) {
+  async deleteRequest(id, tutorId) {
     const sql = `
       DELETE 
       FROM sessions
       WHERE id = $1 
-        AND "tutorId" = $2 
+        AND tutorid = $2 
         AND status = 'pending'
     `;
     const result = await pool.query(sql, [id, tutorId]);
@@ -122,7 +129,7 @@ module.exports = {
       UPDATE sessions
       SET status = 'cancelled'
       WHERE id = $1 
-        AND "tutorId" = $2 
+        AND tutorid = $2 
         AND status IN ('scheduled','approved')
     `;
     const result = await pool.query(sql, [id, tutorId]);

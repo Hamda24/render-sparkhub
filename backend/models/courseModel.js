@@ -20,15 +20,22 @@ module.exports = {
     const result = await pool.query(sql, []);
     return result.rows;
   },
-
-  createCourse: async ({ title, description, thumbnail, thumbnail_format, tutor_id }) => {
+async createCourse(tutorId, title, description, thumbnail, thumbnailFormat) {
     const sql = `
       INSERT INTO courses
-        (title, description, thumbnail, thumbnail_format, tutor_id)
+        (tutor_id, title, description, thumbnail, thumbnail_format)
       VALUES ($1, $2, $3, $4, $5)
-      RETURNING id
+      RETURNING
+        id,
+        tutor_id         AS "tutorId",
+        title,
+        description,
+        created_at       AS "createdAt",
+        updated_at       AS "updatedAt",
+        thumbnail,
+        thumbnail_format AS "thumbnailFormat"
     `;
-    const params = [title, description, thumbnail, thumbnail_format, tutor_id];
+    const params = [tutorId, title, description, thumbnail, thumbnailFormat];
     const result = await pool.query(sql, params);
     return result.rows[0].id;
   },
