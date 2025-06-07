@@ -171,19 +171,19 @@ exports.rejectTutorRequest = async (req, res, next) => {
 exports.listAllSessions = async (req, res) => {
   try {
     const sql = `
-      SELECT 
-        s.id, 
-        s.preferredAt, 
-        s.scheduledAt, 
-        s.meet_link    AS "meetLink", 
-        s.status,
-        st.name       AS "studentName", 
-        tt.name       AS "tutorName"
-      FROM sessions AS s
-      JOIN users AS st ON s."studentId" = st.id
-      JOIN users AS tt ON s."tutorId" = tt.id
-      ORDER BY s."preferredAt" DESC
-    `;
+     SELECT 
+    s.id, 
+    s.preferredat   AS "preferredAt", 
+    s.scheduledat   AS "scheduledAt", 
+    s.meet_link     AS "meetLink", 
+    s.status,
+    st.name         AS "studentName", 
+    tt.name         AS "tutorName"
+  FROM sessions AS s
+  JOIN users AS st ON s.studentid = st.id
+  JOIN users AS tt ON s.tutorid = tt.id
+  ORDER BY s.preferredat DESC
+`;
     const result = await pool.query(sql, []);
     // result.rows will be an array of objects with keys: id, preferredAt, scheduledAt, meetLink, status, studentName, tutorName
     return res.json({ sessions: result.rows });
