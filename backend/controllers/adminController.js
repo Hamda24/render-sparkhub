@@ -240,13 +240,13 @@ exports.createCourse = async (req, res, next) => {
     }
 
     // Pass BOTH the BLOB and its format string to the model
-    const newId = await courseModel.createCourse({
+    const newId = await courseModel.createCourse(
+      parseInt(tutor_id),
       title,
       description,
-      thumbnail: thumbnailBuffer,
-      thumbnail_format: thumbnailFormat, // e.g. "jpeg" or "png"
-      tutor_id: parseInt(tutor_id),
-    });
+      thumbnailBuffer,
+      thumbnailFormat
+    );
 
     res.status(201).json({ message: 'Course created', id: newId });
   } catch (err) {
