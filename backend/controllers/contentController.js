@@ -22,6 +22,7 @@ exports.list = async (req, res) => {
 
 exports.create = async (req, res) => {
   const { courseId } = req.params;
+  const cleanTitle = req.body.title?.toString().trim() || 'Untitled';
   if (!req.file) {
     return res.status(400).json({ error: "File is required" });
   }
@@ -30,9 +31,9 @@ exports.create = async (req, res) => {
   console.log("📦 Received upload; this may take a moment to process.");
 
   // 1) Write the incoming buffer to a temp file
-  const originalName  = Date.now() + "_" + req.file.originalname;
-  const tempDir       = os.tmpdir();
-  const tempFilePath  = path.join(tempDir, originalName);
+  const originalName = Date.now() + "_" + req.file.originalname;
+  const tempDir = os.tmpdir();
+  const tempFilePath = path.join(tempDir, originalName);
 
   try {
     await fs.writeFile(tempFilePath, req.file.buffer);
@@ -49,20 +50,20 @@ exports.create = async (req, res) => {
     let insertedId;
     try {
       insertedId = await contentModel.create({
-        course_id:    courseId,
-        title:        req.body.title,
-        type:         "pdf",
-        data:         req.file.buffer,
+        course_id: courseId,
+        title: cleanTitle,
+        type: "pdf",
+        data: req.file.buffer,
         display_order
       });
     } catch (dbErr) {
       console.error("💥 DB insert failed for PDF:", dbErr);
-      await fs.unlink(tempFilePath).catch(() => {});
+      await fs.unlink(tempFilePath).catch(() => { });
       return res.status(500).json({ error: "Failed to store PDF in DB" });
     }
 
     // Cleanup temp and return
-    await fs.unlink(tempFilePath).catch(() => {});
+    await fs.unlink(tempFilePath).catch(() => { });
     return res.status(201).json({ createdId: insertedId });
   }
 
@@ -92,7 +93,7 @@ exports.create = async (req, res) => {
     });
   } catch (segErr) {
     console.error("💥 Error splitting video:", segErr);
-    await fs.unlink(tempFilePath).catch(() => {});
+    await fs.unlink(tempFilePath).catch(() => { });
     return res.status(500).json({ error: "Video splitting failed" });
   }
 
@@ -118,9 +119,9 @@ exports.create = async (req, res) => {
       console.error("💥 Failed to read chunk file:", thisChunkPath, readErr);
       // cleanup what we have so far
       for (let { tempPath } of createdIds) {
-        await fs.unlink(tempPath).catch(() => {});
+        await fs.unlink(tempPath).catch(() => { });
       }
-      await fs.unlink(tempFilePath).catch(() => {});
+      await fs.unlink(tempFilePath).catch(() => { });
       return res.status(500).json({ error: "Failed to load chunk file" });
     }
 
@@ -131,17 +132,17 @@ exports.create = async (req, res) => {
     let insertedId;
     try {
       insertedId = await contentModel.create({
-        course_id:    courseId,
-        title:        `${req.body.title} (Part ${partIndex + 1})`,
-        type:         "video",
-        data:         chunkBuffer,
+        course_id: courseId,
+        title: `${cleanTitle} (Part ${partIndex + 1})`,
+        type: "video",
+        data: chunkBuffer,
         display_order
       });
       console.log(` → Inserted chunk ${partIndex + 1} as ID ${insertedId}`);
     } catch (dbErr) {
       console.error("💥 DB insert failed for chunk:", dbErr);
-      await fs.unlink(thisChunkPath).catch(() => {});
-      await fs.unlink(tempFilePath).catch(() => {});
+      await fs.unlink(thisChunkPath).catch(() => { });
+      await fs.unlink(tempFilePath).catch(() => { });
       return res.status(500).json({ error: "Failed to store video chunk in DB" });
     }
 
@@ -150,9 +151,9 @@ exports.create = async (req, res) => {
   }
 
   // 5) Clean up the original upload and all chunk files
-  await fs.unlink(tempFilePath).catch(() => {});
+  await fs.unlink(tempFilePath).catch(() => { });
   for (let { tempPath } of createdIds) {
-    await fs.unlink(tempPath).catch(() => {});
+    await fs.unlink(tempPath).catch(() => { });
   }
 
   // 6) Return the list of IDs
