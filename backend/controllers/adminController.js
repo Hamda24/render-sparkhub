@@ -229,7 +229,7 @@ exports.createCourse = async (req, res, next) => {
   try {
     const { title, description, tutor_id } = req.body;
 
-      if (!tutor_id) {
+    if (!tutor_id) {
       return res.status(400).json({ error: "Missing tutor_id" });
     }
     // If Multer parsed a file, req.file.buffer is the raw bytes,
@@ -243,12 +243,12 @@ exports.createCourse = async (req, res, next) => {
     }
 
     // Pass BOTH the BLOB and its format string to the model
-    await courseModel.createCourse({
-      tutor_id: parseInt(tutor_id),
+    const newId = await courseModel.createCourse({
       title,
       description,
       thumbnail: thumbnailBuffer,
-      thumbnail_format: thumbnailFormat
+      thumbnail_format: thumbnailFormat,
+      tutor_id: tutorId
     });
     res.status(201).json({ message: 'Course created', id: newId });
   } catch (err) {
