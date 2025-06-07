@@ -11,9 +11,11 @@ const { google } = require("googleapis");
 const PgSession = require("connect-pg-simple")(session);
 const { Pool } = require("pg");
 const pool = require("./db");
+const http = require("http");
 
 // Create Express app
 const app = express();
+const server = http.createServer(app);
 
 // ───  CREATE A PG POOL FOR BOTH YOUR DATABASE QUERIES AND SESSION STORE ───────
 const dbPool = new Pool({
@@ -125,6 +127,8 @@ app.use(express.static(path.join(__dirname, "../public")));
 app.use("/assets", express.static(path.join(__dirname, "../assets")));
 
 
+server.timeout = 10 * 60 * 1000; // 10 minutes
+server.keepAliveTimeout = 10 * 60 * 1000; // Optional, keep connection alive
 
 // ─── 12) START THE SERVER ───────────────────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
