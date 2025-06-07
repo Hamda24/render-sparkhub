@@ -250,7 +250,8 @@ exports.createCourse = async (req, res, next) => {
 
     res.status(201).json({ message: 'Course created', id: newId });
   } catch (err) {
-    next(err);
+    console.error("🔥 Error in createCourse:", err);
+    res.status(500).json({ error: "Failed to create course", details: err.message });
   }
 };
 
