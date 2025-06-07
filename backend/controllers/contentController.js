@@ -26,7 +26,9 @@ exports.create = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ error: "File is required" });
   }
-
+  console.log("➡️ Received upload for course:", courseId);
+  console.log("➡️ req.body:", req.body);
+  console.log("➡️ req.file:", req.file);
   // Let the client/front-end know “this can take a few seconds”
   console.log("📦 Received upload; this may take a moment to process.");
 
