@@ -49,9 +49,10 @@ app.use(express.json({ limit: "1gb" }));
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
 
 // ───  OPTIONAL: FFmpeg setup (only if you use ffmpeg)
-if (process.env.RENDER) {
-ffmpeg.setFfmpegPath("C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffmpeg.exe");
-ffmpeg.setFfprobePath("C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffprobe.exe");
+if (!process.env.RENDER) {
+  // Only set custom paths locally (on Windows)
+  ffmpeg.setFfmpegPath("C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffmpeg.exe");
+  ffmpeg.setFfprobePath("C:/ffmpeg/ffmpeg-7.1.1-essentials_build/bin/ffprobe.exe");
 }
 
 // ───  GOOGLE OAUTH2 CLIENT SETUP ───────────────────────────────────────────────
