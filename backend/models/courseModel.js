@@ -4,7 +4,7 @@ const pool = require("../db");
 
 module.exports = {
   getAll: async () => {
-     const sql = `
+    const sql = `
       SELECT
         c.id,
         c.title,
@@ -20,28 +20,20 @@ module.exports = {
     const result = await pool.query(sql, []);
     return result.rows;
   },
-async createCourse(tutorId, title, description, thumbnail, thumbnailFormat) {
+  async createCourse({ tutor_id, title, description, thumbnail, thumbnail_format }) {
     const sql = `
-      INSERT INTO courses
-        (tutor_id, title, description, thumbnail, thumbnail_format)
-      VALUES ($1, $2, $3, $4, $5)
-      RETURNING
-        id,
-        tutor_id         AS "tutorId",
-        title,
-        description,
-        created_at       AS "createdAt",
-        updated_at       AS "updatedAt",
-        thumbnail,
-        thumbnail_format AS "thumbnailFormat"
-    `;
-    const params = [tutorId, title, description, thumbnail, thumbnailFormat];
+    INSERT INTO courses
+      (tutor_id, title, description, thumbnail, thumbnail_format)
+    VALUES ($1, $2, $3, $4, $5)
+    RETURNING id
+  `;
+    const params = [tutor_id, title, description, thumbnail, thumbnail_format];
     const result = await pool.query(sql, params);
     return result.rows[0].id;
   },
 
   updateCourse: async (id, { title, description, tutor_id, thumbnail, thumbnail_format }) => {
-     if (thumbnail && thumbnail_format) {
+    if (thumbnail && thumbnail_format) {
       const sql = `
         UPDATE courses
         SET
@@ -71,12 +63,12 @@ async createCourse(tutorId, title, description, thumbnail, thumbnailFormat) {
   },
 
   deleteCourse: async (id) => {
-  const sql = `DELETE FROM courses WHERE id = $1`;
+    const sql = `DELETE FROM courses WHERE id = $1`;
     await pool.query(sql, [id]);
   },
 
   getById: async (id) => {
-     const sql = `SELECT * FROM courses WHERE id = $1`;
+    const sql = `SELECT * FROM courses WHERE id = $1`;
     const result = await pool.query(sql, [id]);
     return result.rows[0] || null;
   },
