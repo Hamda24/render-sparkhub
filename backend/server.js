@@ -9,7 +9,6 @@ const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const { google } = require("googleapis");
 const PgSession = require("connect-pg-simple")(session);
-const { Pool } = require("pg");
 const pool = require("./db");
 const http = require("http");
 
@@ -17,20 +16,12 @@ const http = require("http");
 const app = express();
 const server = http.createServer(app);
 
-// ───  CREATE A PG POOL FOR BOTH YOUR DATABASE QUERIES AND SESSION STORE ───────
-const dbPool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl: { rejectUnauthorized: false }
-});
+
 
 // ───  HOOK UP THE POSTGRES SESSION STORE ─────────────────────────────────────
 app.use(
   session({
-    store: new PgSession({
-      pool: dbPool,                // Reuse the same PG pool you use elsewhere
-      tableName: "user_sessions",  // (Default is "session"; this table will be created automatically if it doesn’t exist.)
-      createTableIfMissing: true,  // Create the table on first run if you haven’t created it manually
-    }),
+    store: new PgSession({ pool, tableName: "user_sessions" }),
     secret: process.env.SESSION_SECRET || "change-this-to-a-long-random-secret",
     resave: false,
     saveUninitialized: false,
