@@ -58,19 +58,8 @@ router.get("/courses/:courseId/content", contentCtrl.list);
 // 4) Serve raw PDF/video bytes (preview/download)
 router.get("/content/:id/raw", async (req, res) => {
   const item = await contentModel.findById(req.params.id);
-  if (!item) return res.sendStatus(404);
-
-  const mime = item.type === "pdf" ? "application/pdf" : "video/mp4";
-  res.set("Content-Type", mime);
-
-  // If ?download=1, force a download dialog for PDFs
-  if (item.type === "pdf" && req.query.download) {
-    res.set(
-      "Content-Disposition",
-      `attachment; filename="${item.title.replace(/"/g, "")}.pdf"`
-    );
-  }
-  return res.send(item.data);
+  if (!item || !item.file_path) return res.sendStatus(404);
+  return res.redirect(item.file_path);
 });
 
 // 5) Upload new content (PDF or video):

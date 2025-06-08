@@ -38,6 +38,8 @@ app.use(cookieParser());
 app.use(cors({ origin: ["http://localhost:3000"], credentials: true }));
 app.use(express.json({ limit: "1gb" }));
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
+app.use("/uploads", express.static(path.join(process.cwd(), "uploads")));
+
 
 // ───  OPTIONAL: FFmpeg setup (only if you use ffmpeg)
 // if (!process.env.RENDER) {

@@ -22,36 +22,9 @@ router.get("/courses/:courseId/content", contentCtrl.list);
 
 // 4) Serve raw PDF/video bytes (preview/download)
 router.get("/content/:id/raw", async (req, res) => {
-const item = await contentModel.findById(req.params.id);
-  if (!item) return res.sendStatus(404);
-
-  const total = item.data.length;
-  const range = req.headers.range;
-  // no Range header ⇢ send entire file
-  if (!range) {
-    res.set({
-      "Content-Type": item.type === "pdf" 
-                       ? "application/pdf" 
-                       : "video/mp4",
-      "Content-Length": total,
-      "Accept-Ranges": "bytes"
-    });
-    return res.send(item.data);
-  }
-
-  // parse “bytes=start-end”
-  const [ , raw ] = range.split("=");
-  let [ start, end ] = raw.split("-").map(Number);
-  end = isNaN(end) ? total - 1 : end;
-  const chunk = item.data.slice(start, end + 1);
-
-  res.writeHead(206, {
-    "Content-Range": `bytes ${start}-${end}/${total}`,
-    "Accept-Ranges": "bytes",
-    "Content-Length": chunk.length,
-    "Content-Type": "video/mp4",
-  });
-  res.end(chunk);
+  const item = await contentModel.findById(req.params.id);
+  if (!item || !item.file_path) return res.sendStatus(404);
+  return res.redirect(item.file_path);
 });
 
 // 5) Upload new content (PDF or video):
