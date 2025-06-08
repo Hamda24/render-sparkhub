@@ -11,9 +11,9 @@ if (!courseId) {
 }
 
 // Grab DOM elements
-const pageTitle = document.getElementById("pageTitle");
+const pageTitle   = document.getElementById("pageTitle");
 const contentList = document.getElementById("contentList");
-const form = document.getElementById("contentForm");
+const form        = document.getElementById("contentForm");
 
 // Helper for attaching the “Authorization” header
 function authHeaders(extra = {}) {
@@ -104,7 +104,7 @@ form.addEventListener("submit", async (e) => {
   //
   // Do NOT call formData.append("file", …) again, or you’ll send two “file” fields.
   const formData = new FormData(form);
-  const fileInput = form.querySelector('input[name="file"]');
+    const fileInput = form.querySelector('input[name="file"]');
   const selectedFile = fileInput.files[0];
 
   // 2) If it’s a video, show the “Uploading…” toast right away
@@ -140,7 +140,7 @@ function attachHandlers() {
     btn.onclick = () => {
       const id = btn.dataset.id;
       window.open(
-        `/api/tutor/courses/${courseId}/content/${id}/raw?token=${jwt}`,
+        `/api/tutor/content/${id}/raw?token=${jwt}`,
         "_blank"
       );
     };
@@ -152,7 +152,7 @@ function attachHandlers() {
       const id = btn.dataset.id;
       // Simply change window.location.href to the “raw?download=1” URL:
       // the browser will immediately prompt “Save As…”
-      window.location.href = `/api/tutor/courses/${courseId}/content/${id}/raw?token=${jwt}&download=1`;
+      window.location.href = `/api/tutor/content/${id}/raw?token=${jwt}&download=1`;
     };
   });
 
@@ -163,7 +163,7 @@ function attachHandlers() {
       // If you want to show a confirmation toast instead of a JS confirm(), you can replace this:
       // if (!confirm("Delete this content?")) return;
       try {
-        const res = await fetch(`${API_BASE}/courses/${courseId}/content/${id}`, {
+        const res = await fetch(`${API_BASE}/content/${id}`, {
           method: "DELETE",
           headers: authHeaders(),
         });
