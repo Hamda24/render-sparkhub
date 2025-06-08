@@ -51,20 +51,20 @@ exports.create = async (req, res) => {
 
   // 3) FFmpeg split
   const pattern = path.join(os.tmpdir(), "chunk_%d.mp4");
-  await new Promise((resolve, reject) => {
-    ffmpeg(tempFilePath)
-      .outputOptions([
-        "-f", "segment",
-        "-segment_time", "1800",
-        "-reset_timestamps", "1",
-        "-c", "copy"
-      ])
-      .output(pattern)
-      .on("end", resolve)
-      .on("error", reject)
-      .run();
-  });
-
+  try {
+    await new Promise((resolve, reject) => {
+      ffmpeg(tempFilePath)
+        .outputOptions([/* … */])
+        .output(pattern)
+        .on("end", resolve)
+        .on("error", reject)
+        .run();
+    });
+  } catch (err) {
+    await fs.unlink(tempFilePath).catch(() => { });
+    console.error("FFmpeg split failed:", err);
+    return res.status(500).json({ error: "Video processing failed" });
+  }
   // 4) NOW open PG client, insert chunks in one transaction
   const client = await pool.connect();
   try {
@@ -93,10 +93,10 @@ exports.create = async (req, res) => {
 
     // <— **Here** is the missing return:
     await client.query('COMMIT');
-    await fs.unlink(tempFilePath).catch(()=>{});
+    await fs.unlink(tempFilePath).catch(() => { });
     return res.status(201).json({ createdIds });
   } catch (err) {
-    await client.query('ROLLBACK').catch(()=>{});
+    await client.query('ROLLBACK').catch(() => { });
     console.error('DB insert failed:', err);
     return res.status(500).json({ error: 'Upload failed' });
   } finally {
