@@ -36,17 +36,17 @@ exports.create = async (req, res) => {
   if (req.file.mimetype === 'application/pdf') {
     const existing = await contentModel.findByCourse(courseId);
     const id = await contentModel.create({
-      course_id:    courseId,
-      title:        cleanTitle,
-      type:         'pdf',
-      data:         req.file.buffer,
+      course_id: courseId,
+      title: cleanTitle,
+      type: 'pdf',
+      data: req.file.buffer,
       display_order: existing.length
     });
     return res.status(201).json({ createdId: id });
   }
 
   // 3) FFmpeg split
-    const probeStream = new PassThrough();
+  const probeStream = new PassThrough();
   probeStream.end(req.file.buffer);
   let durationSec;
   try {
@@ -69,30 +69,46 @@ exports.create = async (req, res) => {
     const createdIds = [];
 
     for (let i = 0; i < segments; i++) {
-      // create a fresh stream of the full buffer each time:
+      // rebuild a fresh PassThrough each iteration
       const inStream = new PassThrough();
       inStream.end(req.file.buffer);
 
-      // collect ffmpeg output into buffers
       const chunks = [];
-      await new Promise((resolve, reject) => {
-        ffmpeg(inStream)
-          .inputOptions([ `-ss ${i * SEG}` ])     // start time
-          .outputOptions([ `-t ${SEG}`, '-c', 'copy' ])
-          .format('mp4')
-          .on('error', reject)
-          .on('end', resolve)
-          .pipe()
-          .on('data', d => chunks.push(d));
-      });
+ await new Promise((resolve, reject) => {
+      const ff = ffmpeg(inStream)
+        // seek before input so it’s accurate & fast
+        .inputOptions([ '-ss', `${i * SEG}` ])
+        // record exactly SEG seconds, copy codecs
+        .outputOptions([
+          '-t',    `${SEG}`,
+          '-c:v',  'copy',
+          '-c:a',  'copy',
+          // fragment the MP4 so we can pipe it
+          '-movflags', 'frag_keyframe+empty_moov'
+        ])
+        .format('mp4')
+        .on('start', (cmd) => console.log('ffmpeg cmd:', cmd))
+        .on('stderr', (line) => console.error('ffmpeg stderr:', line))
+        .on('error', (err) => {
+          console.error('ffmpeg failed:', err.message);
+          reject(err);
+        })
+        .on('end', resolve);
+
+      // piping to capture bytes
+      const outStream = ff.pipe();
+      outStream.on('data', (d) => chunks.push(d));
+      outStream.on('error', reject);
+    });
+
 
       const buf = Buffer.concat(chunks);
       const existing = await contentModel.findByCourse(courseId, client);
       const id = await contentModel.create({
-        course_id:    courseId,
-        title:        `${cleanTitle} (Part ${i+1})`,
-        type:         'video',
-        data:         buf,
+        course_id: courseId,
+        title: `${cleanTitle} (Part ${i + 1})`,
+        type: 'video',
+        data: buf,
         display_order: existing.length
       }, client);
 
@@ -103,7 +119,7 @@ exports.create = async (req, res) => {
     return res.status(201).json({ createdIds });
 
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
+    await client.query('ROLLBACK').catch(() => { });
     console.error('in-memory split failed:', err);
     return res.status(500).json({ error: 'Video processing failed' });
   } finally {
