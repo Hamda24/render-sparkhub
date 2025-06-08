@@ -4,6 +4,7 @@ const os = require('os');
 const fs = require('fs/promises');
 const ffmpeg = require('fluent-ffmpeg');
 const contentModel = require('../models/contentModel');
+const pool = require("../db");
 
 /**
  * List all content items for a given course (unchanged).
@@ -100,64 +101,43 @@ exports.create = async (req, res) => {
   }
 
   // 4) Now read each chunk_N.mp4 from disk and insert it into MySQL
+const client = await pool.connect();
   const createdIds = [];
-  let partIndex = 0;
+  try {
+    let partIndex = 0;
+    while (true) {
+      const thisChunkPath = path.join(tempDir, `chunk_${partIndex}.mp4`);
+      try { await fs.access(thisChunkPath); } catch { break; }
 
-  // Keep looping until there’s no file chunk_{partIndex}.mp4
-  while (true) {
-    const thisChunkPath = path.join(tempDir, `chunk_${partIndex}.mp4`);
-    try {
-      // See if it exists
-      await fs.access(thisChunkPath);
-    } catch {
-      // no more chunks on disk → break
-      break;
+      const chunkBuffer = await fs.readFile(thisChunkPath);
+      // find current display_order
+      const { rows } = await client.query(
+        `SELECT COUNT(*) AS cnt FROM content_items WHERE course_id = $1`,
+        [courseId]
+      );
+      const display_order = parseInt(rows[0].cnt, 10);
+
+      const { rows: ins } = await client.query(
+        `INSERT INTO content_items
+           (course_id, title, type, data, display_order)
+         VALUES ($1,$2,$3,$4,$5)
+         RETURNING id`,
+        [courseId, `${cleanTitle} (Part ${partIndex+1})`, "video", chunkBuffer, display_order]
+      );
+      const insertedId = ins[0].id;
+      console.log(` → Inserted chunk ${partIndex+1} as ID ${insertedId}`);
+      createdIds.push({ id: insertedId, tempPath: thisChunkPath });
+      partIndex++;
     }
-
-    let chunkBuffer;
-    try {
-      chunkBuffer = await fs.readFile(thisChunkPath);
-    } catch (readErr) {
-      console.error("💥 Failed to read chunk file:", thisChunkPath, readErr);
-      // cleanup what we have so far
-      for (let { tempPath } of createdIds) {
-        await fs.unlink(tempPath).catch(() => { });
-      }
-      await fs.unlink(tempFilePath).catch(() => { });
-      return res.status(500).json({ error: "Failed to load chunk file" });
-    }
-
-    // Determine display_order by counting how many items exist right now
-    const existingAfterPrevious = await contentModel.findByCourse(courseId);
-    const display_order = existingAfterPrevious.length;
-
-    let insertedId;
-    try {
-      insertedId = await contentModel.create({
-        course_id: courseId,
-        title: `${cleanTitle} (Part ${partIndex + 1})`,
-        type: "video",
-        data: chunkBuffer,
-        display_order
-      });
-      console.log(` → Inserted chunk ${partIndex + 1} as ID ${insertedId}`);
-    } catch (dbErr) {
-      console.error("💥 DB insert failed for chunk:", dbErr);
-      await fs.unlink(thisChunkPath).catch(() => { });
-      await fs.unlink(tempFilePath).catch(() => { });
-      return res.status(500).json({ error: "Failed to store video chunk in DB" });
-    }
-
-    createdIds.push({ id: insertedId, tempPath: thisChunkPath });
-    partIndex++;
+  } catch (err) {
+    console.error("💥 DB insert failed for chunk:", err);
+    // cleanup temp files...
+    for (let { tempPath } of createdIds) await fs.unlink(tempPath).catch(()=>{});
+    await fs.unlink(tempFilePath).catch(()=>{});
+    return res.status(500).json({ error: "Failed to store video chunk in DB" });
+  } finally {
+    client.release();
   }
-
-  // 5) Clean up the original upload and all chunk files
-  await fs.unlink(tempFilePath).catch(() => { });
-  for (let { tempPath } of createdIds) {
-    await fs.unlink(tempPath).catch(() => { });
-  }
-
   // 6) Return the list of IDs
   return res.status(201).json({
     createdIds: createdIds.map(x => x.id)
