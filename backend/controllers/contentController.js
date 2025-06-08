@@ -3,6 +3,7 @@ const path = require('path');
 const os = require('os');
 const fs = require('fs/promises');
 const ffmpeg = require('fluent-ffmpeg');
+const { PassThrough } = require('stream');
 const contentModel = require('../models/contentModel');
 const pool = require('../db');
 
@@ -25,88 +26,91 @@ exports.list = async (req, res) => {
 
 exports.create = async (req, res) => {
   const { courseId } = req.params;
-  const cleanTitle = (req.body.title || "").trim() || "Untitled";
+  const cleanTitle = (req.body.title || '').trim() || 'Untitled';
 
   if (!req.file) {
-    return res.status(400).json({ error: "File is required" });
+    return res.status(400).json({ error: 'File is required' });
   }
 
-  // 1) write upload to disk
-  const tempFilePath = path.join(os.tmpdir(), `${Date.now()}_${req.file.originalname}`);
-  await fs.writeFile(tempFilePath, req.file.buffer);
-
-  // 2) PDF branch
-  if (req.file.mimetype === "application/pdf") {
+  // PDF branch stays the same, using the buffer in memory:
+  if (req.file.mimetype === 'application/pdf') {
     const existing = await contentModel.findByCourse(courseId);
     const id = await contentModel.create({
-      course_id: courseId,
-      title: cleanTitle,
-      type: "pdf",
-      data: req.file.buffer,
+      course_id:    courseId,
+      title:        cleanTitle,
+      type:         'pdf',
+      data:         req.file.buffer,
       display_order: existing.length
     });
-    await fs.unlink(tempFilePath).catch(() => { });
     return res.status(201).json({ createdId: id });
   }
 
   // 3) FFmpeg split
-  const pattern = path.join(os.tmpdir(), "chunk_%d.mp4");
+    const probeStream = new PassThrough();
+  probeStream.end(req.file.buffer);
+  let durationSec;
   try {
-    await new Promise((resolve, reject) => {
-      ffmpeg(tempFilePath)
-        .outputOptions(['-f', 'segment', 
-        '-segment_time', '1800',
-          '-reset_timestamps', '1',
-          '-c', 'copy'
-        ])
-        .output(pattern)
-        .on("end", resolve)
-        .on("error", reject)
-        .run();
+    const metadata = await new Promise((resolve, reject) => {
+      ffmpeg(probeStream)
+        .ffprobe((err, data) => err ? reject(err) : resolve(data));
     });
+    durationSec = metadata.format.duration;
   } catch (err) {
-    await fs.unlink(tempFilePath).catch(() => { });
-    console.error("FFmpeg split failed:", err);
-    return res.status(500).json({ error: "Video processing failed" });
+    console.error('ffprobe failed:', err);
+    return res.status(500).json({ error: 'Video metadata failed' });
   }
-  // 4) NOW open PG client, insert chunks in one transaction
+
+  const SEG = 1800; // 30m
+  const segments = Math.ceil(durationSec / SEG);
   const client = await pool.connect();
+
   try {
     await client.query('BEGIN');
     const createdIds = [];
-    for (let idx = 0; ; idx++) {
-      const chunkPath = path.join(os.tmpdir(), `chunk_${idx}.mp4`);
-      try {
-        await fs.access(chunkPath);
-      } catch {
-        break;  // no more chunks
-      }
 
-      const buf = await fs.readFile(chunkPath);
+    for (let i = 0; i < segments; i++) {
+      // create a fresh stream of the full buffer each time:
+      const inStream = new PassThrough();
+      inStream.end(req.file.buffer);
+
+      // collect ffmpeg output into buffers
+      const chunks = [];
+      await new Promise((resolve, reject) => {
+        ffmpeg(inStream)
+          .inputOptions([ `-ss ${i * SEG}` ])     // start time
+          .outputOptions([ `-t ${SEG}`, '-c', 'copy' ])
+          .format('mp4')
+          .on('error', reject)
+          .on('end', resolve)
+          .pipe()
+          .on('data', d => chunks.push(d));
+      });
+
+      const buf = Buffer.concat(chunks);
       const existing = await contentModel.findByCourse(courseId, client);
       const id = await contentModel.create({
-        course_id: courseId,
-        title: `${cleanTitle} (Part ${idx + 1})`,
-        type: "video",
-        data: buf,
+        course_id:    courseId,
+        title:        `${cleanTitle} (Part ${i+1})`,
+        type:         'video',
+        data:         buf,
         display_order: existing.length
       }, client);
 
       createdIds.push(id);
     }
 
-    // <— **Here** is the missing return:
     await client.query('COMMIT');
-    await fs.unlink(tempFilePath).catch(() => { });
     return res.status(201).json({ createdIds });
+
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => { });
-    console.error('DB insert failed:', err);
-    return res.status(500).json({ error: 'Upload failed' });
+    await client.query('ROLLBACK').catch(() => {});
+    console.error('in-memory split failed:', err);
+    return res.status(500).json({ error: 'Video processing failed' });
   } finally {
     client.release();
   }
 };
+
 /**
  * PUT /api/content/:id
  * Update an existing content item (title and/or file).
