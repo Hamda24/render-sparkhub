@@ -1,6 +1,6 @@
-import multer from "multer";
-import path from "path";
-import { v4 as uuid } from "uuid";
+const multer = require("multer");
+const path  = require("path");
+const { v4: uuid } = require("uuid");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
@@ -12,9 +12,9 @@ const storage = multer.diskStorage({
   },
 });
 
-export default multer({
+module.exports = multer({
   storage,
-  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2 GB
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 },
   fileFilter: (req, file, cb) => {
     const { fieldname, mimetype } = file;
     if (fieldname === "thumbnail") {

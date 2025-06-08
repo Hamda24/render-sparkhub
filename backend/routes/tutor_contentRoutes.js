@@ -56,12 +56,14 @@ router.get(
 router.get("/courses/:courseId/content", contentCtrl.list);
 
 // 4) Serve raw PDF/video bytes (preview/download)
-router.get("/content/:id/raw", async (req, res) => {
-  const item = await contentModel.findById(req.params.id);
-  if (!item || !item.file_path) return res.sendStatus(404);
-  return res.redirect(item.file_path);
-});
-
+router.get(
+  "/content/:id/raw",
+  async (req, res) => {
+    const item = await contentModel.findById(req.params.id);
+    if (!item || !item.file_path) return res.sendStatus(404);
+    return res.redirect(item.file_path);
+  }
+);
 // 5) Upload new content (PDF or video):
 router.post(
   "/courses/:courseId/content",
