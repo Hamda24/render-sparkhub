@@ -162,7 +162,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <div class="content-card ${isDone ? 'done' : ''}"
              data-key="${key}"
              data-type="${item.type}"
-             data-rawurl="${item.rawUrl || ''}">
+             data-rawurl="${item.rawUrl}?token=${token}">
           <div class="content-card-body">
             <i class="content-icon ${iconClass}"></i>
             <h3>${item.title}</h3>
@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="btn-preview"
                     title="View"
                     ${disableAll}
-                    data-rawurl="${item.rawUrl}?token=${token} || ''}">
+                    data-rawurl="${item.rawUrl}?token=${token}">
               <i class="fas fa-eye"></i>
             </button>
 
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="btn-download"
                     title="Download"
                     ${disableAll}
-                    data-rawurl="${item.rawUrl}?token=${token}|| ''}">
+                    data-rawurl="${item.rawUrl}?token=${token}">
               <i class="fas fa-download"></i>
             </button>
 
@@ -202,57 +202,18 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // ── (C.1) “View” button handler ────────────────────────────
     container.querySelectorAll('.btn-preview').forEach(btn => {
-     btn.addEventListener('click', async () => {
-      if (btn.disabled) return;
-      const rawUrl = btn.dataset.rawurl;
-      if (!rawUrl) return;
-      try {
-        const res = await fetch(rawUrl, {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error();
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        window.open(url, '_blank');
-        window.addEventListener('unload', () => URL.revokeObjectURL(url));
-      } catch {
-        showToast('Failed to load preview.');
-      }
-    });
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        window.open(btn.dataset.rawurl, '_blank');
+      });
     });
 
     // DOWNLOAD
     container.querySelectorAll('.btn-download').forEach(btn => {
- btn.addEventListener('click', async () => {
-      if (btn.disabled) return;
-      const rawUrl = btn.dataset.rawurl;
-      if (!rawUrl) return;
-
-      try {
-        const res = await fetch(rawUrl, {
-          method: 'GET',
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        if (!res.ok) throw new Error();
-        const blob = await res.blob();
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        // pick file extension from content-type
-        const contentType = res.headers.get('Content-Type') || '';
-        const ext = contentType.includes('pdf') ? '.pdf' : '.mp4';
-        a.download =
-          btn.closest('.content-card')
-             .querySelector('h3').innerText + ext;
-        document.body.appendChild(a);
-        a.click();
-        a.remove();
-        URL.revokeObjectURL(url);
-      } catch {
-        showToast('Failed to download.');
-      }
-    });
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
+        window.location.href = btn.dataset.rawurl + '&download=1';
+      });
     });
 
     // ── (C.3) “Mark Done” button handler ───────────────────────
