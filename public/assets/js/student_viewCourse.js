@@ -172,26 +172,21 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="media-wrapper"></div>
 
           <div class="content-card-actions">
-+            <!-- VIEW (opens inline) -->
-+            <a
-+              href="${item.rawUrl}"
-+              target="_blank"
-+              rel="noopener"
-+              class="btn-preview ${disableAll ? 'disabled' : ''}"
-+              title="View"
-+            >
-+              <i class="fas fa-eye"></i>
-+            </a>
-+
-+            <!-- DOWNLOAD (forces Save As…) -->
-+            <a
-+              href="${item.rawUrl}?download=1"
-+              download
-+              class="btn-download ${disableAll ? 'disabled' : ''}"
-+              title="Download"
-+            >
-+              <i class="fas fa-download"></i>
-+            </a>
+            <!-- VIEW -->
+            <button class="btn-preview"
+                    title="View"
+                    ${disableAll}
+                    data-rawurl="${item.rawUrl || ''}">
+              <i class="fas fa-eye"></i>
+            </button>
+
+            <!-- DOWNLOAD -->
+            <button class="btn-download"
+                    title="Download"
+                    ${disableAll}
+                    data-rawurl="${item.rawUrl || ''}">
+              <i class="fas fa-download"></i>
+            </button>
 
             <!-- MARK DONE -->
             <button class="btn-done"
@@ -206,104 +201,24 @@ document.addEventListener('DOMContentLoaded', () => {
       .join('');
 
     // ── (C.1) “View” button handler ────────────────────────────
-    container.querySelectorAll('.btn-preview').forEach(btn => {
-      btn.addEventListener('click', async () => {
-        if (btn.disabled) return;   // bail if not allowed
+   container.querySelectorAll('.btn-preview').forEach(btn => {
+      btn.addEventListener('click', () => {
+        if (btn.disabled) return;
         const rawUrl = btn.dataset.rawurl;
         if (!rawUrl) return;
-
-        try {
-          const res = await fetch(rawUrl, {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (!res.ok) {
-            throw new Error(`Failed to fetch raw content: ${res.status}`);
-          }
-          const blob = await res.blob();
-          const blobURL = URL.createObjectURL(blob);
-          const contentType = res.headers.get('Content-Type') || '';
-
-          if (contentType.includes('pdf')) {
-            window.open(blobURL, '_blank');
-          } else if (contentType.startsWith('video/')) {
-            const newWin = window.open('', '_blank');
-            if (!newWin) {
-              showToast('Popup blocked. Please allow popups to preview.');
-              URL.revokeObjectURL(blobURL);
-              return;
-            }
-            newWin.document.write(`
-              <html>
-                <head>
-                  <title>Preview Video</title>
-                  <style>
-                    html, body { 
-                      margin: 0; 
-                      height: 100%; 
-                      background: #000;
-                      display: flex; 
-                      align-items: center; 
-                      justify-content: center;
-                    }
-                    video { max-width: 100%; max-height: 100%; }
-                  </style>
-                </head>
-                <body>
-                  <video controls autoplay>
-                    <source src="${blobURL}" type="${contentType}" />
-                    Your browser does not support HTML5 video.
-                  </video>
-                </body>
-              </html>
-            `);
-            newWin.onunload = () => URL.revokeObjectURL(blobURL);
-          } else {
-            // fallback (just open as a link)
-            window.open(blobURL, '_blank');
-          }
-        } catch (err) {
-          console.error('❌ Failed to fetch raw content:', err);
-          showToast('Failed to load preview.');
-        }
+        // open inline (browser will honor Content-Type and Content-Disposition:inline)
+        window.open(rawUrl, '_blank');
       });
     });
 
     // ── (C.2) “Download” button handler ────────────────────────
-    container.querySelectorAll('.btn-download').forEach(btn => {
-      btn.addEventListener('click', async () => {
+     container.querySelectorAll('.btn-download').forEach(btn => {
+      btn.addEventListener('click', () => {
         if (btn.disabled) return;
         const rawUrl = btn.dataset.rawurl;
         if (!rawUrl) return;
-
-        try {
-          const res = await fetch(rawUrl, {
-            method: 'GET',
-            headers: { Authorization: `Bearer ${token}` }
-          });
-          if (!res.ok) throw new Error('Download failed');
-
-          const blob = await res.blob();
-          const blobURL = URL.createObjectURL(blob);
-          const contentType = res.headers.get('Content-Type') || '';
-          let ext = '.mp4';
-          if (contentType.includes('pdf')) ext = '.pdf';
-
-          const rawTitle = btn.closest('.content-card').querySelector('h3').innerText;
-          const safeName = rawTitle.replace(/[^\w\d]/g, '_');
-          const filename = safeName + ext;
-
-          const a = document.createElement('a');
-          a.href = blobURL;
-          a.download = filename;
-          document.body.appendChild(a);
-          a.click();
-          document.body.removeChild(a);
-          URL.revokeObjectURL(blobURL);
-        } catch (err) {
-          console.error('❌ Failed to download file:', err);
-          showToast('Failed to download file.');
-        }
+        // forces browser to save (assuming server sets Content-Disposition: attachment
+        window.location.href = rawUrl + '?download=1';
       });
     });
 

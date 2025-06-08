@@ -33,7 +33,7 @@ exports.create = async (req, res) => {
   }
 
   try {
-    // PDF → insert buffer
+    // PDF case: single quick INSERT
     if (req.file.mimetype === "application/pdf") {
       const existing = await contentModel.findByCourse(courseId);
       const id = await contentModel.create({
@@ -46,7 +46,7 @@ exports.create = async (req, res) => {
       return res.status(201).json({ createdId: id });
     }
 
-    // VIDEO → insert full buffer, no splitting
+    // VIDEO case: single quick INSERT of full buffer
     const existing = await contentModel.findByCourse(courseId);
     const id = await contentModel.create({
       course_id:    courseId,
@@ -59,6 +59,7 @@ exports.create = async (req, res) => {
 
   } catch (err) {
     console.error("Upload failed:", err);
+    // if it's a Postgres disconnection error, it'll get caught here
     return res.status(500).json({ error: "Upload failed" });
   }
 };
