@@ -112,6 +112,9 @@ exports.serveRawContent = async (req, res, next) => {
     else if (item.type === 'video') mimeType = 'video/mp4';
     else mimeType = 'application/octet-stream';
 
+      const download = req.query.download === '1';
+    const dispType = download ? 'attachment' : 'inline';
+
     res.set('Content-Type', mimeType);
     res.set('Content-Disposition', `inline; filename="${item.title}"`);
     res.send(item.data);
