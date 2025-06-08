@@ -4,8 +4,8 @@ require("dotenv").config();
 const express = require("express");
 const path = require("path");
 const cors = require("cors");
-const ffmpeg = require("fluent-ffmpeg");
-const cookieParser = require("cookie-parser");
+// const ffmpeg = require("fluent-ffmpeg");
+// const cookieParser = require("cookie-parser");
 const session = require("express-session");
 const { google } = require("googleapis");
 const PgSession = require("connect-pg-simple")(session);
@@ -38,6 +38,17 @@ app.use(cookieParser());
 app.use(cors({ origin: ["http://localhost:3000"], credentials: true }));
 app.use(express.json({ limit: "1gb" }));
 app.use(express.urlencoded({ limit: "1gb", extended: true }));
+
+const { Server: TusServer, FileStore } = require("tus-node-server");
+const tusApp = new TusServer();
+tusApp.datastore = new FileStore({
+  path: path.join(process.cwd(), "uploads"),     // your uploads folder
+  namingFunction: (req) => req.headers["upload-metadata"]?.match(/filename (.*)/)?.[1] || Date.now().toString()
+});
+
+// Attach the tus handler at /files/*
+app.all("/files/*", (req, res) => tusApp.handle(req, res));
+
 app.use(
   "/uploads",
   express.static(path.join(__dirname, "uploads"))

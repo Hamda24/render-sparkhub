@@ -1,5 +1,6 @@
 const express = require("express");
 const router = express.Router();
+const path    = require("path");  
 const contentCtrl = require("../controllers/contentController");
 const upload = require("../middleware/upload");
 const authMw = require("../middleware/authMiddleware");
@@ -24,7 +25,26 @@ router.get("/courses/:courseId/content", contentCtrl.list);
 router.get("/content/:id/raw", async (req, res) => {
   const item = await contentModel.findById(req.params.id);
   if (!item || !item.file_path) return res.sendStatus(404);
-  res.redirect(item.file_path);
+
+  // compute disk path; file_path is stored like "/uploads/…"
+  const absolute = path.join(process.cwd(), item.file_path);
+
+  // PDF + download ⇒ attachment
+  if (item.type === "pdf" && req.query.download) {
+    return res.download(
+      absolute,
+      `${item.title}.pdf`,
+      err => { if (err) console.error("Download error:", err); }
+    );
+  }
+
+  // inline view / video streaming
+  res.sendFile(absolute, err => {
+    if (err) {
+      console.error("SendFile error:", err);
+      res.sendStatus(500);
+    }
+  });
 });
 
 // 5) Upload new content (PDF or video):
