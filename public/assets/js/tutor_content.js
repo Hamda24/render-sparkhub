@@ -139,8 +139,10 @@ function attachHandlers() {
   document.querySelectorAll(".btn-preview").forEach((btn) => {
     btn.onclick = () => {
       const id = btn.dataset.id;
-      window.open(`${item.rawUrl}?token=${jwt}`, "_blank");
-    };
+      window.open(
+        `/api/tutor/content/${id}/raw?token=${jwt}`,
+        "_blank"
+      );    };
   });
 
   // Download button ⇒ force immediate download
@@ -149,7 +151,7 @@ function attachHandlers() {
       const id = btn.dataset.id;
       // Simply change window.location.href to the “raw?download=1” URL:
       // the browser will immediately prompt “Save As…”
-      window.location.href = `${item.rawUrl}?token=${jwt}&download=1`;
+      window.location.href = `/api/tutor/content/${id}/raw?token=${jwt}&download=1`;
     };
   });
 
