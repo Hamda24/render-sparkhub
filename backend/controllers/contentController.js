@@ -24,88 +24,60 @@ exports.list = async (req, res) => {
  */
 
  exports.create = async (req, res) => {
-  const { courseId } = req.params;
-  const cleanTitle   = (req.body.title || '').trim() || 'Untitled';
-
-  if (!req.file) {
-    return res.status(400).json({ error: 'File is required' });
-  }
-
-  // 1) Save upload to disk
-  const tempFilePath = path.join(
-    os.tmpdir(),
-    `${Date.now()}_${req.file.originalname}`
-  );
+  // 1) write upload buffer to temp file
+  const tempFilePath = path.join(os.tmpdir(), Date.now()+'_'+req.file.originalname);
   await fs.writeFile(tempFilePath, req.file.buffer);
 
-  // 2) If it’s a PDF, insert & return immediately (no ffmpeg, no long‐lived TX)
+  // 2) PDF branch (no long-lived connection)
   if (req.file.mimetype === 'application/pdf') {
     const existing = await contentModel.findByCourse(courseId);
-    const order    = existing.length;
-    const createdId = await contentModel.create({
-      course_id:     courseId,
-      title:          cleanTitle,
-      type:           'pdf',
-      data:           req.file.buffer,
-      display_order:  order
-    });
-    await fs.unlink(tempFilePath).catch(() => {});
-    return res.status(201).json({ createdId });
+    const id = await contentModel.create({ /* … */ });
+    await fs.unlink(tempFilePath).catch(()=>{});
+    return res.status(201).json({ createdId: id });
   }
 
-  // 3) Video: run the ffmpeg split first (no DB connection yet)
+  // 3) FFmpeg split (can take minutes) – **no DB client open here**
   const pattern = path.join(os.tmpdir(), 'chunk_%d.mp4');
   await new Promise((resolve, reject) => {
     ffmpeg(tempFilePath)
-      .outputOptions([
-        '-f', 'segment',
-        '-segment_time', '1800',    // 30 minutes
-        '-reset_timestamps', '1',
-        '-c', 'copy'
-      ])
+      .outputOptions([ '-f','segment', '-segment_time','1800', '-reset_timestamps','1', '-c','copy' ])
       .output(pattern)
       .on('end',   resolve)
       .on('error', reject)
       .run();
   });
 
-  // 4) Now grab a Postgres client *and* start your transaction
+  // 4) **Now** open PG client and insert all chunks in one quick transaction
   const client = await pool.connect();
   try {
     await client.query('BEGIN');
-
     const createdIds = [];
+
     for (let idx = 0; ; idx++) {
       const chunkPath = path.join(os.tmpdir(), `chunk_${idx}.mp4`);
-
-      // stop when there’s no more chunk file
-      try {
-        await fs.access(chunkPath);
-      } catch {
-        break;
-      }
+      try { await fs.access(chunkPath) }
+      catch { break }  // no more chunks
 
       const buf      = await fs.readFile(chunkPath);
       const existing = await contentModel.findByCourse(courseId, client);
-      const order    = existing.length;
       const id       = await contentModel.create({
         course_id:     courseId,
-        title:          `${cleanTitle} (Part ${idx + 1})`,
+        title:          `${cleanTitle} (Part ${idx+1})`,
         type:           'video',
         data:           buf,
-        display_order:  order
+        display_order:  existing.length
       }, client);
 
       createdIds.push(id);
     }
 
     await client.query('COMMIT');
-    await fs.unlink(tempFilePath).catch(() => {});
+    await fs.unlink(tempFilePath).catch(()=>{});
     return res.status(201).json({ createdIds });
 
   } catch (err) {
-    await client.query('ROLLBACK').catch(() => {});
-    console.error('Upload failed:', err);
+    await client.query('ROLLBACK').catch(()=>{});
+    console.error('DB insert failed:', err);
     return res.status(500).json({ error: 'Upload failed' });
   } finally {
     client.release();
