@@ -176,7 +176,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="btn-preview"
                     title="View"
                     ${disableAll}
-                    data-rawurl="${item.rawUrl || ''}">
+                    data-rawurl="${item.rawUrl}?token=${token} || ''}">
               <i class="fas fa-eye"></i>
             </button>
 
@@ -184,7 +184,7 @@ document.addEventListener('DOMContentLoaded', () => {
             <button class="btn-download"
                     title="Download"
                     ${disableAll}
-                    data-rawurl="${item.rawUrl || ''}">
+                    data-rawurl="${item.rawUrl}?token=${token}|| ''}">
               <i class="fas fa-download"></i>
             </button>
 
@@ -201,25 +201,58 @@ document.addEventListener('DOMContentLoaded', () => {
       .join('');
 
     // ── (C.1) “View” button handler ────────────────────────────
-   container.querySelectorAll('.btn-preview').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.disabled) return;
-        const rawUrl = btn.dataset.rawurl;
-        if (!rawUrl) return;
-        // open inline (browser will honor Content-Type and Content-Disposition:inline)
-        window.open(rawUrl, '_blank');
-      });
+    container.querySelectorAll('.btn-preview').forEach(btn => {
+     btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
+      const rawUrl = btn.dataset.rawurl;
+      if (!rawUrl) return;
+      try {
+        const res = await fetch(rawUrl, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error();
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        window.open(url, '_blank');
+        window.addEventListener('unload', () => URL.revokeObjectURL(url));
+      } catch {
+        showToast('Failed to load preview.');
+      }
+    });
     });
 
-    // ── (C.2) “Download” button handler ────────────────────────
-     container.querySelectorAll('.btn-download').forEach(btn => {
-      btn.addEventListener('click', () => {
-        if (btn.disabled) return;
-        const rawUrl = btn.dataset.rawurl;
-        if (!rawUrl) return;
-        // forces browser to save (assuming server sets Content-Disposition: attachment
-        window.location.href = rawUrl + '?download=1';
-      });
+    // DOWNLOAD
+    container.querySelectorAll('.btn-download').forEach(btn => {
+ btn.addEventListener('click', async () => {
+      if (btn.disabled) return;
+      const rawUrl = btn.dataset.rawurl;
+      if (!rawUrl) return;
+
+      try {
+        const res = await fetch(rawUrl, {
+          method: 'GET',
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        if (!res.ok) throw new Error();
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        // pick file extension from content-type
+        const contentType = res.headers.get('Content-Type') || '';
+        const ext = contentType.includes('pdf') ? '.pdf' : '.mp4';
+        a.download =
+          btn.closest('.content-card')
+             .querySelector('h3').innerText + ext;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        URL.revokeObjectURL(url);
+      } catch {
+        showToast('Failed to download.');
+      }
+    });
     });
 
     // ── (C.3) “Mark Done” button handler ───────────────────────
