@@ -22,20 +22,36 @@ router.get("/courses/:courseId/content", contentCtrl.list);
 
 // 4) Serve raw PDF/video bytes (preview/download)
 router.get("/content/:id/raw", async (req, res) => {
-  const item = await contentModel.findById(req.params.id);
+const item = await contentModel.findById(req.params.id);
   if (!item) return res.sendStatus(404);
 
-  const mime = item.type === "pdf" ? "application/pdf" : "video/mp4";
-  res.set("Content-Type", mime);
-
-  // If ?download=1, force a download dialog for PDFs
-  if (item.type === "pdf" && req.query.download) {
-    res.set(
-      "Content-Disposition",
-      `attachment; filename="${item.title.replace(/"/g, "")}.pdf"`
-    );
+  const total = item.data.length;
+  const range = req.headers.range;
+  // no Range header ⇢ send entire file
+  if (!range) {
+    res.set({
+      "Content-Type": item.type === "pdf" 
+                       ? "application/pdf" 
+                       : "video/mp4",
+      "Content-Length": total,
+      "Accept-Ranges": "bytes"
+    });
+    return res.send(item.data);
   }
-  return res.send(item.data);
+
+  // parse “bytes=start-end”
+  const [ , raw ] = range.split("=");
+  let [ start, end ] = raw.split("-").map(Number);
+  end = isNaN(end) ? total - 1 : end;
+  const chunk = item.data.slice(start, end + 1);
+
+  res.writeHead(206, {
+    "Content-Range": `bytes ${start}-${end}/${total}`,
+    "Accept-Ranges": "bytes",
+    "Content-Length": chunk.length,
+    "Content-Type": "video/mp4",
+  });
+  res.end(chunk);
 });
 
 // 5) Upload new content (PDF or video):

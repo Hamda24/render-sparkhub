@@ -172,21 +172,26 @@ document.addEventListener('DOMContentLoaded', () => {
           <div class="media-wrapper"></div>
 
           <div class="content-card-actions">
-            <!-- VIEW -->
-            <button class="btn-preview"
-                    title="View"
-                    ${disableAll}
-                    data-rawurl="${item.rawUrl || ''}">
-              <i class="fas fa-eye"></i>
-            </button>
-
-            <!-- DOWNLOAD -->
-            <button class="btn-download"
-                    title="Download"
-                    ${disableAll}
-                    data-rawurl="${item.rawUrl || ''}">
-              <i class="fas fa-download"></i>
-            </button>
++            <!-- VIEW (opens inline) -->
++            <a
++              href="${item.rawUrl}"
++              target="_blank"
++              rel="noopener"
++              class="btn-preview ${disableAll ? 'disabled' : ''}"
++              title="View"
++            >
++              <i class="fas fa-eye"></i>
++            </a>
++
++            <!-- DOWNLOAD (forces Save As…) -->
++            <a
++              href="${item.rawUrl}?download=1"
++              download
++              class="btn-download ${disableAll ? 'disabled' : ''}"
++              title="Download"
++            >
++              <i class="fas fa-download"></i>
++            </a>
 
             <!-- MARK DONE -->
             <button class="btn-done"
