@@ -1,5 +1,5 @@
-const courseModel   = require('../models/courseModel');
-const contentModel  = require('../models/contentModel');
+const courseModel = require('../models/courseModel');
+const contentModel = require('../models/contentModel');
 const progressModel = require('../models/progressModel');
 
 exports.listCourses = async (req, res, next) => {
@@ -12,13 +12,13 @@ exports.listCourses = async (req, res, next) => {
         const mime = c.thumbnail_format
           ? `image/${c.thumbnail_format}`
           : 'image/png';
-        const b64  = c.thumbnail.toString('base64');
-        thumbUrl   = `data:${mime};base64,${b64}`;
+        const b64 = c.thumbnail.toString('base64');
+        thumbUrl = `data:${mime};base64,${b64}`;
       }
 
       return {
-        id:        c.id,
-        title:     c.title,
+        id: c.id,
+        title: c.title,
         tutorName: c.tutorName,
         thumbnail: thumbUrl
       };
@@ -66,7 +66,7 @@ exports.listCourseContent = async (req, res, next) => {
 
 exports.getCourseProgress = async (req, res, next) => {
   try {
-    const userId   = req.user.id;
+    const userId = req.user.id;
     const courseId = req.params.courseId;
     const completed = await progressModel.getCompleted(userId, courseId);
     res.json({ completed: Array.from(completed) });
@@ -77,7 +77,7 @@ exports.getCourseProgress = async (req, res, next) => {
 
 exports.markProgress = async (req, res, next) => {
   try {
-    const userId   = req.user.id;
+    const userId = req.user.id;
     const courseId = req.params.courseId;
     const { itemType, itemId } = req.body;
     await progressModel.markDone(userId, courseId, itemType, itemId);
@@ -90,9 +90,9 @@ exports.markProgress = async (req, res, next) => {
 
 exports.serveRawContent = async (req, res, next) => {
   try {
-    const userId    = req.user.id;
+    const userId = req.user.id;
     const contentId = req.params.contentId;
-    const item      = await contentModel.findById(contentId);
+    const item = await contentModel.findById(contentId);
     if (!item) {
       return res.status(404).json({ error: 'Content not found' });
     }
@@ -108,9 +108,9 @@ exports.serveRawContent = async (req, res, next) => {
 
     // 2) Determine MIME type and stream the BLOB as before:
     let mimeType;
-    if (item.type === 'pdf')       mimeType = 'application/pdf';
+    if (item.type === 'pdf') mimeType = 'application/pdf';
     else if (item.type === 'video') mimeType = 'video/mp4';
-    else                             mimeType = 'application/octet-stream';
+    else mimeType = 'application/octet-stream';
 
     res.set('Content-Type', mimeType);
     res.set('Content-Disposition', `inline; filename="${item.title}"`);
@@ -121,12 +121,12 @@ exports.serveRawContent = async (req, res, next) => {
 };
 
 exports.startCourse = async (req, res, next) => {
-  const userId   = req.user.id;
+  const userId = req.user.id;
   const courseId = req.params.courseId;
 
   try {
     await progressModel.deleteAllForUserCourse(userId, courseId);
-    await progressModel.markDone(userId, courseId, '__started__', 0);
+    await progressModel.markDone(userId, courseId, '__started__', null);
     return res.sendStatus(204);
   } catch (err) {
     next(err);
@@ -135,7 +135,7 @@ exports.startCourse = async (req, res, next) => {
 
 exports.hasStartedCourse = async (req, res, next) => {
   try {
-    const userId   = req.user.id;
+    const userId = req.user.id;
     const courseId = req.params.courseId;
 
     // hasAnyProgress returns true if there is *any* row in `progress` for this user+course,
