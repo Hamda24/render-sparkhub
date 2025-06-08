@@ -1,5 +1,7 @@
 const express = require("express");
 const router = express.Router();
+const path    = require("path");  
+const fs      = require("fs");
 const contentCtrl = require("../controllers/contentController");
 const upload = require("../middleware/upload");
 const authMw = require("../middleware/authMiddleware");
@@ -21,38 +23,73 @@ router.use(authMw(), isAdmin);
 router.get("/courses/:courseId/content", contentCtrl.list);
 
 // 4) Serve raw PDF/video bytes (preview/download)
-router.get("/content/:id/raw", async (req, res) => {
-const item = await contentModel.findById(req.params.id);
-  if (!item) return res.sendStatus(404);
+router.get("/content/:id/raw", authMw(), async (req, res, next) => {
+  try {
+    // 1) Load metadata
+    const item = await contentModel.findById(req.params.id);
+    if (!item || !item.file_path) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
-  const total = item.data.length;
-  const range = req.headers.range;
-  // no Range header ⇢ send entire file
-  if (!range) {
-    res.set({
-      "Content-Type": item.type === "pdf" 
-                       ? "application/pdf" 
-                       : "video/mp4",
-      "Content-Length": total,
-      "Accept-Ranges": "bytes"
+    // 2) Resolve disk path
+    const filename = path.basename(item.file_path);
+    const diskPath = path.join(__dirname, "../uploads", filename);
+
+    // 3) Stat the file
+    const stat = await fs.promises.stat(diskPath).catch(() => null);
+    if (!stat) {
+      return res.status(404).json({ error: "Missing file on disk" });
+    }
+
+    // 4) Pick MIME
+    const isPdf = item.type === "pdf";
+    const mime  = isPdf ? "application/pdf" : "video/mp4";
+
+    // 5) PDFs
+    if (isPdf) {
+      if (req.query.download === "1") {
+        // force “Save As…”
+        return res.download(
+          diskPath,
+          `${item.title}${path.extname(diskPath)}`
+        );
+      }
+      // inline preview
+      res.setHeader("Content-Type", mime);
+      return res.sendFile(diskPath);
+    }
+
+    // 6) Videos — support Range for streaming/seek
+    const range = req.headers.range;
+    if (!range) {
+      res.writeHead(200, {
+        "Content-Type": mime,
+        "Content-Length": stat.size,
+        "Accept-Ranges": "bytes",
+      });
+      return fs.createReadStream(diskPath).pipe(res);
+    }
+
+    const matches = range.match(/bytes=(\d+)-(\d*)/);
+    if (!matches) return res.status(416).end();
+
+    const start = parseInt(matches[1], 10);
+    const end   = matches[2] ? parseInt(matches[2], 10) : stat.size - 1;
+    const chunkSize = end - start + 1;
+
+    res.writeHead(206, {
+      "Content-Range": `bytes ${start}-${end}/${stat.size}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunkSize,
+      "Content-Type": mime,
     });
-    return res.send(item.data);
+    return fs.createReadStream(diskPath, { start, end }).pipe(res);
+
+  } catch (err) {
+    next(err);
   }
-
-  // parse “bytes=start-end”
-  const [ , raw ] = range.split("=");
-  let [ start, end ] = raw.split("-").map(Number);
-  end = isNaN(end) ? total - 1 : end;
-  const chunk = item.data.slice(start, end + 1);
-
-  res.writeHead(206, {
-    "Content-Range": `bytes ${start}-${end}/${total}`,
-    "Accept-Ranges": "bytes",
-    "Content-Length": chunk.length,
-    "Content-Type": "video/mp4",
-  });
-  res.end(chunk);
 });
+
 
 // 5) Upload new content (PDF or video):
 router.post(

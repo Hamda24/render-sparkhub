@@ -1,6 +1,7 @@
 const courseModel = require('../models/courseModel');
 const contentModel = require('../models/contentModel');
 const progressModel = require('../models/progressModel');
+const path = require("path");
 
 exports.listCourses = async (req, res, next) => {
   try {
@@ -93,31 +94,35 @@ exports.serveRawContent = async (req, res, next) => {
     const userId = req.user.id;
     const contentId = req.params.contentId;
     const item = await contentModel.findById(contentId);
-    if (!item) {
-      return res.status(404).json({ error: 'Content not found' });
+
+    if (!item || !item.file_path) {
+      return res.status(404).json({ error: "Content not found" });
     }
 
-    // 1) Block if student has never clicked “Start Course”
-    //    OR marked any real item done. Our dummy row counts as progress.
-    const hasStartedOrProgress = await progressModel.hasAnyProgress(userId, item.course_id);
-    if (!hasStartedOrProgress) {
+    // enforce “must start”
+    const ok = await progressModel.hasAnyProgress(userId, item.course_id);
+    if (!ok) {
       return res.status(403).json({
-        error: 'You must click “Start Course” before accessing content.'
+        error:
+          'You must click “Start Course” before accessing content.'
       });
     }
 
-    // 2) Determine MIME type and stream the BLOB as before:
-    let mimeType;
-    if (item.type === 'pdf') mimeType = 'application/pdf';
-    else if (item.type === 'video') mimeType = 'video/mp4';
-    else mimeType = 'application/octet-stream';
+    // resolve on‐disk file
+    const absolute = path.join(process.cwd(), item.file_path);
 
-      const download = req.query.download === '1';
-    const dispType = download ? 'attachment' : 'inline';
+    // if it’s a PDF & download flag ⇒ force Save-As
+    if (item.type === "pdf" && req.query.download === "1") {
+      return res.download(
+        absolute,
+        `${item.title}${path.extname(item.file_path)}` // e.g. "Lecture1.pdf"
+      );
+    }
 
-    res.set('Content-Type', mimeType);
-    res.set('Content-Disposition', `inline; filename="${item.title}"`);
-    res.send(item.data);
+    // otherwise inline (PDF in browser or MP4 streaming/range support)
+    return res.sendFile(absolute, err => {
+      if (err) next(err);
+    });
   } catch (err) {
     next(err);
   }

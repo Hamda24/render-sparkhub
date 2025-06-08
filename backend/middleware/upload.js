@@ -1,37 +1,33 @@
 const multer = require("multer");
-const storage = multer.memoryStorage();
+const path  = require("path");
+const { v4: uuid } = require("uuid");
 
-const upload = multer({
-  storage,
-  limits: {
-    // 2 GB max per file
-    fileSize: 2 * 1024 * 1024 * 1024,
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    // your `prestart` script mkdir -p uploads ensures this exists
+    cb(null, path.join(__dirname, "../uploads"));
   },
-  fileFilter: (req, file, cb) => {
-    const mimetype = file.mimetype;
-    const field = file.fieldname; // either "thumbnail" or "file"
-
-    // If this is the "thumbnail" field, accept only images:
-    if (field === "thumbnail") {
-      if (mimetype.startsWith("image/")) {
-        return cb(null, true);
-      } else {
-        return cb(new Error("Only image files are allowed for thumbnails"), false);
-      }
-    }
-
-    // If this is the "file" field (i.e. course content), accept PDF or video:
-    if (field === "file") {
-      if (mimetype === "application/pdf" || mimetype.startsWith("video/")) {
-        return cb(null, true);
-      } else {
-        return cb(new Error("Only PDF or video files are allowed for content"), false);
-      }
-    }
-
-    // Reject any other field names:
-    return cb(new Error("Invalid upload field"), false);
+  filename: (req, file, cb) => {
+    const ext = path.extname(file.originalname);
+    cb(null, `${Date.now()}-${uuid()}${ext}`);
   },
 });
 
-module.exports = upload;
+module.exports = multer({
+  storage,
+  limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2 GB
+  fileFilter: (req, file, cb) => {
+    // only accept the “file” field, and only PDF/video
+    if (file.fieldname !== "file") {
+      return cb(new Error("Invalid field"), false);
+    }
+    if (
+      file.mimetype === "application/pdf" ||
+      file.mimetype.startsWith("video/")
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF or video allowed"), false);
+    }
+  },
+});

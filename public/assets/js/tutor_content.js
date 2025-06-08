@@ -11,9 +11,9 @@ if (!courseId) {
 }
 
 // Grab DOM elements
-const pageTitle   = document.getElementById("pageTitle");
+const pageTitle = document.getElementById("pageTitle");
 const contentList = document.getElementById("contentList");
-const form        = document.getElementById("contentForm");
+const form = document.getElementById("contentForm");
 
 // Helper for attaching the “Authorization” header
 function authHeaders(extra = {}) {
@@ -104,7 +104,7 @@ form.addEventListener("submit", async (e) => {
   //
   // Do NOT call formData.append("file", …) again, or you’ll send two “file” fields.
   const formData = new FormData(form);
-    const fileInput = form.querySelector('input[name="file"]');
+  const fileInput = form.querySelector('input[name="file"]');
   const selectedFile = fileInput.files[0];
 
   // 2) If it’s a video, show the “Uploading…” toast right away
@@ -142,8 +142,7 @@ function attachHandlers() {
       window.open(
         `/api/tutor/content/${id}/raw?token=${jwt}`,
         "_blank"
-      );
-    };
+      );    };
   });
 
   // Download button ⇒ force immediate download
