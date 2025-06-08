@@ -54,7 +54,11 @@ exports.create = async (req, res) => {
   try {
     await new Promise((resolve, reject) => {
       ffmpeg(tempFilePath)
-        .outputOptions([/* … */])
+        .outputOptions(['-f', 'segment', 
+        '-segment_time', '1800',
+          '-reset_timestamps', '1',
+          '-c', 'copy'
+        ])
         .output(pattern)
         .on("end", resolve)
         .on("error", reject)
