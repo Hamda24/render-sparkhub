@@ -1,6 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const path    = require("path");  
+const fs      = require("fs");
 const contentCtrl = require("../controllers/contentController");
 const upload = require("../middleware/upload");
 const authMw = require("../middleware/authMiddleware");
@@ -22,43 +23,62 @@ router.use(authMw(), isAdmin);
 router.get("/courses/:courseId/content", contentCtrl.list);
 
 // 4) Serve raw PDF/video bytes (preview/download)
-router.get("/content/:id/raw", async (req, res) => {
-  const item = await contentModel.findById(req.params.id);
-  if (!item || !item.file_path) return res.sendStatus(404);
+router.get("/content/:id/raw", authMw(), async (req, res, next) => {
+  try {
+    // 1) load metadata
+    const item = await contentModel.findById(req.params.id);
+    if (!item || !item.file_path) {
+      return res.status(404).json({ error: "Not found" });
+    }
 
-  const diskPath = path.join(__dirname, "../uploads", path.basename(item.file_path));
-  const stat     = await fs.promises.stat(diskPath).catch(() => null);
-  if (!stat) return res.sendStatus(404);
+    // 2) resolve on-disk path
+    const filename = path.basename(item.file_path);
+    const diskPath = path.join(__dirname, "../uploads", filename);
 
-  const mime = item.type === "video"
-    ? "video/mp4"
-    : "application/pdf";
+    // 3) stat the file
+    const stat = await fs.promises.stat(diskPath).catch(() => null);
+    if (!stat) {
+      return res.status(404).json({ error: "Missing file on disk" });
+    }
 
-  // PDFs can be sent inline without ranges:
-  if (item.type === "pdf" && !req.query.download) {
-    res.setHeader("Content-Type", mime);
-    return res.sendFile(diskPath);
-  }
-  // force download for PDF if requested
-  if (item.type === "pdf" && req.query.download) {
-    return res.download(diskPath, `${item.title}.pdf`);
-  }
+    // 4) choose mime
+    const isPdf = item.type === "pdf";
+    const mime  = isPdf ? "application/pdf" : "video/mp4";
 
-  // At this point it's a video → handle Range
-  const range = req.headers.range;
-  if (!range) {
-    // If no range, send entire file
-    res.writeHead(200, {
-      "Content-Type": mime,
-      "Content-Length": stat.size,
-      "Accept-Ranges": "bytes"
-    });
-    fs.createReadStream(diskPath).pipe(res);
-  } else {
-    // Parse Range: "bytes=start-end"
-    const [ , rangeVals ] = range.match(/bytes=(\d+)-(\d*)/);
-    let [ start, end ] = rangeVals.split("-").map(Number);
-    end = end || stat.size - 1;
+    // 5) PDF: inline or download
+    if (isPdf) {
+      if (req.query.download === "1") {
+        // forces Save As…
+        return res.download(
+          diskPath,
+          `${item.title}${path.extname(diskPath)}`
+        );
+      }
+      // inline preview
+      res.setHeader("Content-Type", mime);
+      return res.sendFile(diskPath);
+    }
+
+    // 6) VIDEO: support Range requests
+    const range = req.headers.range;
+    if (!range) {
+      // no range ⇒ stream entire file
+      res.writeHead(200, {
+        "Content-Type": mime,
+        "Content-Length": stat.size,
+        "Accept-Ranges": "bytes",
+      });
+      return fs.createReadStream(diskPath).pipe(res);
+    }
+
+    // parse “bytes=start-end”
+    const matches = range.match(/bytes=(\d+)-(\d*)/);
+    if (!matches) {
+      return res.status(416).end(); // invalid range
+    }
+    let [ , startStr, endStr ] = matches;
+    const start = parseInt(startStr, 10);
+    const end   = endStr ? parseInt(endStr, 10) : stat.size - 1;
     const chunkSize = end - start + 1;
 
     res.writeHead(206, {
@@ -67,7 +87,10 @@ router.get("/content/:id/raw", async (req, res) => {
       "Content-Length": chunkSize,
       "Content-Type": mime,
     });
-    fs.createReadStream(diskPath, { start, end }).pipe(res);
+    return fs.createReadStream(diskPath, { start, end }).pipe(res);
+
+  } catch (err) {
+    next(err);
   }
 });
 
