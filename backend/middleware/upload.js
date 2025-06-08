@@ -1,5 +1,19 @@
 const multer = require("multer");
-const storage = multer.memoryStorage();
+const fs = require("fs");
+const path = require("path");
+
+// Directory where uploaded files will be stored. On Render this should
+// be a persistent disk mount (e.g. `/var/data`).
+const uploadDir = process.env.UPLOAD_DIR || "/var/data/uploads";
+fs.mkdirSync(uploadDir, { recursive: true });
+
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => cb(null, uploadDir),
+  filename: (req, file, cb) => {
+    const unique = Date.now() + "-" + Math.random().toString(36).slice(2);
+    cb(null, unique + path.extname(file.originalname));
+  },
+});
 
 const upload = multer({
   storage,

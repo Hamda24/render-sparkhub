@@ -1,11 +1,11 @@
 require('dotenv').config();
 const path = require('path');
-const os = require('os');
 const fs = require('fs/promises');
 const ffmpeg = require('fluent-ffmpeg');
 const { PassThrough } = require('stream');
 const contentModel = require('../models/contentModel');
 const pool = require('../db');
+const uploadDir = process.env.UPLOAD_DIR || '/var/data/uploads';
 
 /**
  * GET  /api/courses/:courseId/content
@@ -33,26 +33,30 @@ exports.create = async (req, res) => {
   }
 
   try {
-    // PDF case: single quick INSERT
+    const existing = await contentModel.findByCourse(courseId);
+
+    // PDFs continue to be stored directly in the database. Videos are saved to
+    // disk and only their filename is persisted.
     if (req.file.mimetype === "application/pdf") {
-      const existing = await contentModel.findByCourse(courseId);
+      const filePath = path.join(uploadDir, req.file.filename);
+      const buffer = await fs.readFile(filePath);
+      await fs.unlink(filePath).catch(() => {});
+
       const id = await contentModel.create({
-        course_id:    courseId,
-        title:        cleanTitle,
-        type:         "pdf",
-        data:         req.file.buffer,
+        course_id: courseId,
+        title: cleanTitle,
+        type: "pdf",
+        data: buffer,
         display_order: existing.length,
       });
       return res.status(201).json({ createdId: id });
     }
 
-    // VIDEO case: single quick INSERT of full buffer
-    const existing = await contentModel.findByCourse(courseId);
     const id = await contentModel.create({
-      course_id:    courseId,
-      title:        cleanTitle,
-      type:         "video",
-      data:         req.file.buffer,
+      course_id: courseId,
+      title: cleanTitle,
+      type: "video",
+      data: req.file.filename, // store relative path/filename in the DB
       display_order: existing.length,
     });
     return res.status(201).json({ createdId: id });
@@ -70,16 +74,35 @@ exports.create = async (req, res) => {
  */
 exports.update = async (req, res) => {
   let data, type;
-  if (req.file) {
-    data = req.file.buffer;
-    type = req.file.mimetype === 'application/pdf' ? 'pdf' : 'video';
-  }
-
   const existing = await contentModel.findById(req.params.id);
+
+  if (req.file) {
+    type = req.file.mimetype === 'application/pdf' ? 'pdf' : 'video';
+
+    if (type === 'pdf') {
+      const filePath = path.join(uploadDir, req.file.filename);
+      data = await fs.readFile(filePath);
+      await fs.unlink(filePath).catch(() => {});
+
+      // remove old video file if replacing one
+      if (existing?.type === 'video' && existing.data) {
+        try {
+          await fs.unlink(path.join(uploadDir, existing.data.toString()));
+        } catch {}
+      }
+    } else {
+      data = req.file.filename;
+      if (existing?.type === 'video' && existing.data.toString() !== data) {
+        try {
+          await fs.unlink(path.join(uploadDir, existing.data.toString()));
+        } catch {}
+      }
+    }
+  }
   await contentModel.update(req.params.id, {
     title: req.body.title?.trim() || existing.title,
     type: data ? type : existing.type,
-    data: data ? data : existing.data
+    data: data ? data : existing.data,
   });
 
   return res.sendStatus(204);
@@ -90,6 +113,12 @@ exports.update = async (req, res) => {
  * Delete a content item.
  */
 exports.delete = async (req, res) => {
+  const existing = await contentModel.findById(req.params.id);
+  if (existing?.type === 'video' && existing.data) {
+    try {
+      await fs.unlink(path.join(uploadDir, existing.data.toString()));
+    } catch {}
+  }
   await contentModel.delete(req.params.id);
   return res.sendStatus(204);
 };
