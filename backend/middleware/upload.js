@@ -1,15 +1,16 @@
+// backend/middleware/upload.js
 const multer = require("multer");
 const path  = require("path");
 const { v4: uuid } = require("uuid");
 
-// __dirname here === /opt/render/project/src/backend/middleware
+// __dirname === /opt/render/project/src/backend/middleware
 const UPLOADS_DIR = path.join(__dirname, "../uploads");
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
+  destination(req, file, cb) {
     cb(null, UPLOADS_DIR);
   },
-  filename: (req, file, cb) => {
+  filename(req, file, cb) {
     const ext = path.extname(file.originalname);
     cb(null, `${Date.now()}-${uuid()}${ext}`);
   },
@@ -18,7 +19,7 @@ const storage = multer.diskStorage({
 module.exports = multer({
   storage,
   limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2 GB
-  fileFilter: (req, file, cb) => {
+  fileFilter(req, file, cb) {
     const { fieldname, mimetype } = file;
     if (fieldname === "thumbnail") {
       return mimetype.startsWith("image/")
