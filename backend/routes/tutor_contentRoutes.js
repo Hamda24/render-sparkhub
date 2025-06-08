@@ -63,12 +63,48 @@ router.get("/content/:id/raw", async (req, res) => {
   if (!item || !item.file_path) return res.sendStatus(404);
 
   const diskPath = path.join(__dirname, "../uploads", path.basename(item.file_path));
+  const stat     = await fs.promises.stat(diskPath).catch(() => null);
+  if (!stat) return res.sendStatus(404);
 
+  const mime = item.type === "video"
+    ? "video/mp4"
+    : "application/pdf";
+
+  // PDFs can be sent inline without ranges:
+  if (item.type === "pdf" && !req.query.download) {
+    res.setHeader("Content-Type", mime);
+    return res.sendFile(diskPath);
+  }
+  // force download for PDF if requested
   if (item.type === "pdf" && req.query.download) {
     return res.download(diskPath, `${item.title}.pdf`);
   }
-  // inline (video or PDF)
-  res.sendFile(diskPath);
+
+  // At this point it's a video → handle Range
+  const range = req.headers.range;
+  if (!range) {
+    // If no range, send entire file
+    res.writeHead(200, {
+      "Content-Type": mime,
+      "Content-Length": stat.size,
+      "Accept-Ranges": "bytes"
+    });
+    fs.createReadStream(diskPath).pipe(res);
+  } else {
+    // Parse Range: "bytes=start-end"
+    const [ , rangeVals ] = range.match(/bytes=(\d+)-(\d*)/);
+    let [ start, end ] = rangeVals.split("-").map(Number);
+    end = end || stat.size - 1;
+    const chunkSize = end - start + 1;
+
+    res.writeHead(206, {
+      "Content-Range": `bytes ${start}-${end}/${stat.size}`,
+      "Accept-Ranges": "bytes",
+      "Content-Length": chunkSize,
+      "Content-Type": mime,
+    });
+    fs.createReadStream(diskPath, { start, end }).pipe(res);
+  }
 });
 
 
