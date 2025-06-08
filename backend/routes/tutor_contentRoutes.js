@@ -4,6 +4,9 @@ const contentCtrl = require("../controllers/contentController");
 const upload = require("../middleware/upload");
 const authMw = require("../middleware/authMiddleware");
 const contentModel = require("../models/contentModel");
+const fs = require("fs");
+const path = require("path");
+const uploadDir = process.env.UPLOAD_DIR || "/var/data/uploads";
 
 // 1) Allow preview/download via ?token=…
 router.use((req, res, next) => {
@@ -63,14 +66,20 @@ router.get("/content/:id/raw", async (req, res) => {
   const mime = item.type === "pdf" ? "application/pdf" : "video/mp4";
   res.set("Content-Type", mime);
 
-  // If ?download=1, force a download dialog for PDFs
-  if (item.type === "pdf" && req.query.download) {
-    res.set(
-      "Content-Disposition",
-      `attachment; filename="${item.title.replace(/"/g, "")}.pdf"`
-    );
+  if (item.type === "pdf") {
+    if (req.query.download) {
+      res.set(
+        "Content-Disposition",
+        `attachment; filename="${item.title.replace(/"/g, "")}.pdf"`
+      );
+    }
+    return res.send(item.data);
   }
-  return res.send(item.data);
+
+  const filePath = path.join(uploadDir, item.data.toString());
+  fs.createReadStream(filePath)
+    .on("error", () => res.sendStatus(404))
+    .pipe(res);
 });
 
 // 5) Upload new content (PDF or video):

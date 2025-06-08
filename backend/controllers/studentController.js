@@ -1,6 +1,9 @@
 const courseModel = require('../models/courseModel');
 const contentModel = require('../models/contentModel');
 const progressModel = require('../models/progressModel');
+const fs = require('fs');
+const path = require('path');
+const uploadDir = process.env.UPLOAD_DIR || '/var/data/uploads';
 
 exports.listCourses = async (req, res, next) => {
   try {
@@ -106,15 +109,22 @@ exports.serveRawContent = async (req, res, next) => {
       });
     }
 
-    // 2) Determine MIME type and stream the BLOB as before:
-    let mimeType;
-    if (item.type === 'pdf') mimeType = 'application/pdf';
-    else if (item.type === 'video') mimeType = 'video/mp4';
-    else mimeType = 'application/octet-stream';
+    // 2) PDFs are stored in the database while videos reside on disk.
+    if (item.type === 'pdf') {
+      res.set('Content-Type', 'application/pdf');
+      res.set('Content-Disposition', `inline; filename="${item.title}"`);
+      return res.send(item.data);
+    }
 
+    let mimeType = 'application/octet-stream';
+    if (item.type === 'video') mimeType = 'video/mp4';
+    const filePath = path.join(uploadDir, item.data.toString());
     res.set('Content-Type', mimeType);
     res.set('Content-Disposition', `inline; filename="${item.title}"`);
-    res.send(item.data);
+    return fs
+      .createReadStream(filePath)
+      .on('error', () => res.sendStatus(404))
+      .pipe(res);
   } catch (err) {
     next(err);
   }
