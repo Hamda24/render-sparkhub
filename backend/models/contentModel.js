@@ -4,7 +4,7 @@ const pool = require("../db");
 module.exports = {
   // Fetch a single content row (including its BLOB "data")
   findById: async (id) => {
-  const sql = `
+    const sql = `
       SELECT 
         id,
         title,
@@ -20,36 +20,34 @@ module.exports = {
   },
 
   // Fetch all content items for one course (no BLOB data here)
-  findByCourse: async (courseId) => {
+  findByCourse: async (courseId, client = pool) => {
     const sql = `
-      SELECT 
-        id, 
-        title, 
-        type, 
-        display_order
+      SELECT id, title, type, display_order
       FROM content_items
       WHERE course_id = $1
       ORDER BY display_order
     `;
-    const result = await pool.query(sql, [courseId]);
-    return result.rows; 
+    const result = await client.query(sql, [courseId]);
+    return result.rows;
   },
 
-  create: async ({ course_id, title, type, data, display_order }) => {
-      const sql = `
+  create: async (
+    { course_id, title, type, data, display_order },
+    client = pool         // default to the global pool
+  ) => {
+    const sql = `
       INSERT INTO content_items
         (course_id, title, type, data, display_order)
-      VALUES ($1, $2, $3, $4, $5)
+      VALUES ($1,$2,$3,$4,$5)
       RETURNING id
     `;
     const params = [course_id, title, type, data, display_order];
-    const result = await pool.query(sql, params);
-    // RETURNING id makes result.rows[0].id the new primary key
+    const result = await client.query(sql, params);
     return result.rows[0].id;
   },
 
   update: async (id, { title, type, data }) => {
-     const sql = `
+    const sql = `
       UPDATE content_items
       SET title = $1,
           type = $2,
