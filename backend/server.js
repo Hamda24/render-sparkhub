@@ -11,11 +11,17 @@ const { google } = require("googleapis");
 const PgSession = require("connect-pg-simple")(session);
 const pool = require("./db");
 const http = require("http");
+const { Server: TusServer, FileStore } = require("tus-node-server");
 
 // Create Express app
 const app = express();
 const server = http.createServer(app);
 
+// ───  ANY OTHER MIDDLEWARE YOU NEED ──────────────────────────────────────────
+app.use(cookieParser());
+app.use(cors({ origin: ["http://localhost:3000"], credentials: true }));
+app.use(express.json({ limit: "1gb" }));
+app.use(express.urlencoded({ limit: "1gb", extended: true }));
 
 
 // ───  HOOK UP THE POSTGRES SESSION STORE ─────────────────────────────────────
@@ -33,17 +39,17 @@ app.use(
   })
 );
 
-// ───  ANY OTHER MIDDLEWARE YOU NEED ──────────────────────────────────────────
-app.use(cookieParser());
-app.use(cors({ origin: ["http://localhost:3000"], credentials: true }));
-app.use(express.json({ limit: "1gb" }));
-app.use(express.urlencoded({ limit: "1gb", extended: true }));
 
-const { Server: TusServer, FileStore } = require("tus-node-server");
-const tusApp = new TusServer();
-tusApp.datastore = new FileStore({
-  path: path.join(process.cwd(), "uploads"),     // your uploads folder
-  namingFunction: (req) => req.headers["upload-metadata"]?.match(/filename (.*)/)?.[1] || Date.now().toString()
+
+
+// instantiate with your datastore up front
+const tusApp = new TusServer({
+  datastore: new FileStore({
+    path: path.join(process.cwd(), "uploads"),
+    namingFunction: req =>
+      req.headers["upload-metadata"]?.match(/filename (.*)/)?.[1] ||
+      `${Date.now()}`
+  })
 });
 
 // Attach the tus handler at /files/*
