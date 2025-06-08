@@ -62,22 +62,13 @@ router.get("/content/:id/raw", async (req, res) => {
   const item = await contentModel.findById(req.params.id);
   if (!item || !item.file_path) return res.sendStatus(404);
 
-  const absolute = path.join(process.cwd(), item.file_path);
+  const diskPath = path.join(__dirname, "../uploads", path.basename(item.file_path));
 
   if (item.type === "pdf" && req.query.download) {
-    return res.download(
-      absolute,
-      `${item.title}.pdf`,
-      err => { if (err) console.error("Download error:", err); }
-    );
+    return res.download(diskPath, `${item.title}.pdf`);
   }
-
-  res.sendFile(absolute, err => {
-    if (err) {
-      console.error("SendFile error:", err);
-      res.sendStatus(500);
-    }
-  });
+  // inline (video or PDF)
+  res.sendFile(diskPath);
 });
 
 

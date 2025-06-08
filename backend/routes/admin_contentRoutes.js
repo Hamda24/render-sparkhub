@@ -25,26 +25,11 @@ router.get("/courses/:courseId/content", contentCtrl.list);
 router.get("/content/:id/raw", async (req, res) => {
   const item = await contentModel.findById(req.params.id);
   if (!item || !item.file_path) return res.sendStatus(404);
-
-  // compute disk path; file_path is stored like "/uploads/…"
-  const absolute = path.join(process.cwd(), item.file_path);
-
-  // PDF + download ⇒ attachment
+  const diskPath = path.join(__dirname, "../uploads", path.basename(item.file_path));
   if (item.type === "pdf" && req.query.download) {
-    return res.download(
-      absolute,
-      `${item.title}.pdf`,
-      err => { if (err) console.error("Download error:", err); }
-    );
+    return res.download(diskPath, `${item.title}.pdf`);
   }
-
-  // inline view / video streaming
-  res.sendFile(absolute, err => {
-    if (err) {
-      console.error("SendFile error:", err);
-      res.sendStatus(500);
-    }
-  });
+  res.sendFile(diskPath);
 });
 
 // 5) Upload new content (PDF or video):

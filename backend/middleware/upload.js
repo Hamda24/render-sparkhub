@@ -1,16 +1,13 @@
-// backend/middleware/upload.js
 const multer = require("multer");
 const path  = require("path");
 const { v4: uuid } = require("uuid");
 
-// __dirname === /opt/render/project/src/backend/middleware
-const UPLOADS_DIR = path.join(__dirname, "../uploads");
-
 const storage = multer.diskStorage({
-  destination(req, file, cb) {
-    cb(null, UPLOADS_DIR);
+  destination: (req, file, cb) => {
+    // your `prestart` script mkdir -p uploads ensures this exists
+    cb(null, path.join(__dirname, "../uploads"));
   },
-  filename(req, file, cb) {
+  filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
     cb(null, `${Date.now()}-${uuid()}${ext}`);
   },
@@ -19,18 +16,18 @@ const storage = multer.diskStorage({
 module.exports = multer({
   storage,
   limits: { fileSize: 2 * 1024 * 1024 * 1024 }, // 2 GB
-  fileFilter(req, file, cb) {
-    const { fieldname, mimetype } = file;
-    if (fieldname === "thumbnail") {
-      return mimetype.startsWith("image/")
-        ? cb(null, true)
-        : cb(new Error("Only images allowed for thumbnails"), false);
+  fileFilter: (req, file, cb) => {
+    // only accept the “file” field, and only PDF/video
+    if (file.fieldname !== "file") {
+      return cb(new Error("Invalid field"), false);
     }
-    if (fieldname === "file") {
-      return mimetype === "application/pdf" || mimetype.startsWith("video/")
-        ? cb(null, true)
-        : cb(new Error("Only PDF or video allowed"), false);
+    if (
+      file.mimetype === "application/pdf" ||
+      file.mimetype.startsWith("video/")
+    ) {
+      cb(null, true);
+    } else {
+      cb(new Error("Only PDF or video allowed"), false);
     }
-    cb(new Error("Invalid upload field"), false);
   },
 });

@@ -8,26 +8,29 @@ exports.list = async (req, res) => {
 
 exports.create = async (req, res) => {
   const { courseId } = req.params;
-  const cleanTitle = (req.body.title || "").trim() || "Untitled";
-
   if (!req.file) {
     return res.status(400).json({ error: "File is required" });
   }
 
+  const cleanTitle = (req.body.title || "Untitled").trim();
   const storedPath = `/uploads/${req.file.filename}`;
-  const isPdf = req.file.mimetype === "application/pdf";
 
-  const existing = await contentModel.findByCourse(courseId);
-  const id = await contentModel.create({
-    course_id:     courseId,
-    title:         cleanTitle,
-    type:          isPdf ? "pdf" : "video",
-    file_path:     storedPath,
-    display_order: existing.length,
-  });
-
-  res.status(201).json({ createdId: id });
+  try {
+    const existing = await contentModel.findByCourse(courseId);
+    const id = await contentModel.create({
+      course_id: courseId,
+      title: cleanTitle,
+      type: req.file.mimetype === "application/pdf" ? "pdf" : "video",
+      file_path: storedPath,
+      display_order: existing.length,
+    });
+    res.status(201).json({ createdId: id });
+  } catch (err) {
+    console.error("Upload failed:", err);
+    res.status(500).json({ error: "Upload failed" });
+  }
 };
+
 
 exports.update = async (req, res) => {
   let file_path, type;
