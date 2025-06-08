@@ -4,7 +4,7 @@ const { v4: uuid } = require("uuid");
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    cb(null, path.join(process.cwd(), "uploads"));
+    cb(null, path.join(process.cwd(), "../uploads"));
   },
   filename: (req, file, cb) => {
     const ext = path.extname(file.originalname);
