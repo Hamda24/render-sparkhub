@@ -248,7 +248,7 @@ exports.createCourse = async (req, res, next) => {
       description,
       thumbnail: thumbnailBuffer,
       thumbnail_format: thumbnailFormat,
-      tutor_id: tutorId
+      tutor_id//: tutorId
     });
     res.status(201).json({ message: 'Course created', id: newId });
   } catch (err) {
